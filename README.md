@@ -10,3 +10,5 @@ Pasos:
    3.3) Para ver cambios pronósticos/supervivencia se calcularán y generar curvas de supervivencia y su representación en Kaplan Meiers en toda la población y por subgrupos, mediante los paquetes: “survival” y “survminer” ejecutando funciones como survfit o ggsurvplot(), respectivamente.
    3.4) Análisis de correlación entre las diferentes variables cuantitativas del dataset. Investigar si hay una correlación entre la edad al diagnóstico y la cantidad de mutaciones o entre el subtipo de cáncer y la expresión de mRNA**.
 5) Crear alguna interfaz con Shiny app para visualizar de forma interactiva los gráficos de supervivencia KM por subgrupos de variables pronósticas que encontremos en el análisis exploratorio así como tablas de prevalencia de mutaciones en función del subtipo escogido, estadío o tipo histológico.
+
+Git y Github en RStudio: https://rpubs.com/RonaldoAnticona/818156
