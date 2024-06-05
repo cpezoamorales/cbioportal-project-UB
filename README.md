@@ -12,3 +12,5 @@ Pasos:
 5) Crear alguna interfaz con Shiny app para visualizar de forma interactiva los gráficos de supervivencia KM por subgrupos de variables pronósticas que encontremos en el análisis exploratorio así como tablas de prevalencia de mutaciones en función del subtipo escogido, estadío o tipo histológico.
 
 Git y Github en RStudio: https://rpubs.com/RonaldoAnticona/818156
+
+https://microsite.geo.uzh.ch/reproducible_research/post/rr-rstudio-git/
