@@ -74,14 +74,14 @@ levels(clinical_brca_wide$PFS_STATUS)
 
 
 # Crear un objeto de supervivencia
- # pfs <- survfit(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wide)
+ pfs <- survfit(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide)
 
 #PFS_STATUS == "1" es per generar un vector TRUE, FALSE i que agafi d'event el TRUE
 
-#pfs
+pfs
 
 # Crear el gráfico de supervivencia
-# ggsurvplot(pfs, data = clinical_brca_wide, risk.table = TRUE, legend.title="", title= "PFS", xlab="Time (months)", ylab= "Progression Free Survival (PFS)")
+ggsurvplot(pfs, data = clinical_brca_wide, risk.table = TRUE, legend.title="", title= "PFS", xlab="Time (months)", ylab= "Progression Free Survival (PFS)")
 
 
 #ALTERNATIVA paquete  "ggsurvfit" --> mejor este se puede editar con ggplot2
@@ -105,5 +105,20 @@ p
 
 
 tbl_survfit(pfs, times=c(60, 120),label_header = "% Survival at Time {time} (95% CI)")
+
+
+p2 <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>%
+  ggsurvfit(linewidth = 1, color = "#607B8B") +  # Cambiar el color de la línea
+  add_confidence_interval(fill = "#B0E2FF") +  # Cambiar el color del sombreado
+  add_risktable() +  # Cambiar el estilo de la tabla de riesgo
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "PFS"
+  )
+
+p2
 
 
