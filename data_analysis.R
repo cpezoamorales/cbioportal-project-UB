@@ -163,20 +163,3 @@ sampleTree <- hclust(dist(rna_longer), method = "average")
 plot(sampleTree)
 
 clust = cutreeStatic(sampleTree, cutHeight = 31000, minSize = 10)
-
-
-# Normalización de las lecturas 
-BiocManager::install("DESeq2")
-library(DESeq2)
-
-de_input <- as.matrix(rna_longer)
-
-meta_df <- data.frame( Sample = names(rna_data[-1])) %>%
-  mutate(
-    Type = gsub("-.*","", Sample) %>% gsub("[.].*","", .)
-  )
-
-dds <- DESeqDataSetFromMatrix(round(de_input),
-                              meta_df,
-                              design = ~Type)
-enableWGCNAThreads()
