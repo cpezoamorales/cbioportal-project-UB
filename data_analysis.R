@@ -11,6 +11,8 @@ if(!require("survminer")){install.packages("survminer")}
 if(!require("ggsurvfit")){install.packages("ggsurvfit")}
 if(!require("corrplot")){install.packages("corrplot")}
 if(!require("caret")){install.packages("caret")}
+if(!require("cluster")){install.packages("cluster")}
+if(!require("factoextra")){install.packages("factoextra")}
 
 # Carga de datos crusdos almacenados previamente en archivo RData
 load("data.RData")
@@ -87,7 +89,6 @@ p <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wide
 p
 
 ### PFS por subtipos
-
 pfs_subtype <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
@@ -106,60 +107,106 @@ clinical_brca_numeric <- clinical_brca_wide %>%
   select_if(is.numeric)
 
 # lower case:
-names(clinical_brca_numeric) <- c("age", "buffa_hypoxia_score", "days_last_followup",
-                                  "days_birth", "days_pathologic_diag", "dfs_month",
-                                  "dss_month", "os_month", "pfs_month", 
-                                  "ragnum_hypoxia_score", "winter_hypoxia_score")
+names(clinical_brca_numeric) <- c(
+  "age",
+  "buffa_hypoxia_score",
+  "days_last_followup",
+  "days_birth",
+  "days_pathologic_diag",
+  "dfs_month",
+  "dss_month",
+  "os_month",
+  "pfs_month", 
+  "ragnum_hypoxia_score",
+  "winter_hypoxia_score"
+  )
 
+# Visualización general con un correlograma:
 pairs(clinical_brca_numeric)
-plot(clinical_brca_numeric$days_pathologic_diag)
 
+
+# Variable "days_pathologic_diag" gneera problema al calcular correlación. Eliminar:
+plot(clinical_brca_numeric$days_pathologic_diag)
 clinical_brca_numeric_2 <- clinical_brca_numeric
 clinical_brca_numeric_2$days_pathologic_diag <- NULL
-pairs(clinical_brca_numeric_2)
+pairs(clinical_brca_numeric_2, pch=20)
 
-clinical_corr <- cor(clinical_brca_numeric_2)
+# Sumario estadístico de las variables
+summary(clinical_brca_numeric_2)
+
+# Gráficos de distribuciones
+par(mfrow=c(2,5))
+hist(clinical_brca_numeric_2$age, main="Age")
+hist(clinical_brca_numeric_2$buffa_hypoxia_score, main="Buffa hypoxia score")
+hist(clinical_brca_numeric_2$days_last_followup, main="Days last followup")
+hist(clinical_brca_numeric_2$days_birth, main="Days birth")
+hist(clinical_brca_numeric_2$dfs_month, main="Dfs month")
+hist(clinical_brca_numeric_2$dss_month, main="Dss month")
+hist(clinical_brca_numeric_2$os_month, main="Os month")
+hist(clinical_brca_numeric_2$pfs_month, mani="Pfs month")
+hist(clinical_brca_numeric_2$ragnum_hypoxia_score, main="Ragnum hypoxia score")
+hist(clinical_brca_numeric_2$winter_hypoxia_score, main="Winter hypoxia score")
+
+# Omitir celdas con valores NA
+clinical_brca_numeric_3 <- na.omit(clinical_brca_numeric_2)
+summary(clinical_brca_numeric_3)
+dim(clinical_brca_numeric_2)
+dim(clinical_brca_numeric_3)
+
+# Gráficos de distribuciones sin valores NAs:
+par(mfrow=c(2,5))
+hist(clinical_brca_numeric_3$age, main="Age")
+hist(clinical_brca_numeric_3$buffa_hypoxia_score, main="Buffa hypoxia score")
+hist(clinical_brca_numeric_3$days_last_followup, main="Days last followup")
+hist(clinical_brca_numeric_3$days_birth, main="Days birth")
+hist(clinical_brca_numeric_3$dfs_month, main="Dfs month")
+hist(clinical_brca_numeric_3$dss_month, main="Dss month")
+hist(clinical_brca_numeric_3$os_month, main="Os month")
+hist(clinical_brca_numeric_3$pfs_month, mani="Pfs month")
+hist(clinical_brca_numeric_3$ragnum_hypoxia_score, main="Ragnum hypoxia score")
+hist(clinical_brca_numeric_3$winter_hypoxia_score, main="Winter hypoxia score")
+# No se observa una gran cambio en las distribuciones al quitar las filas con NA
+
+# Análisis de correlación entre todas las columnas
+clinical_corr <- cor(clinical_brca_numeric_3)
 corrplot(clinical_corr, type = "upper")
-# problema al hacer correlación, quizás por distinto rango de los valores
-# Normalizar los datos?
 
-par(mfrow=c(1,3))
-boxplot(clinical_brca_numeric$age)
-hist(clinical_brca_numeric$age)
-plot(clinical_brca_numeric$age, pch=20)
+# Normalización de los datos
+data_matrix <- as.matrix(clinical_brca_numeric_3)
+normalized_matrix <- apply(data_matrix, 2, 
+                           function(x) (x - min(x)) / (max(x) - min(x)))
 
-boxplot(clinical_brca_numeric$winter_hypoxia_score)
-hist(clinical_brca_numeric$winter_hypoxia_score)
-hist(clinical_brca_numeric$ragnum_hypoxia_score)
-hist(clinical_brca_numeric$buffa_hypoxia_score)
-hist(clinical_brca_numeric$dfs_month)
+cor_normalized <- cor(normalized_matrix)
+corrplot(cor_normalized, type = "upper")
+
+### Segcionamineto de pacientes en vase a tabla de datos clínicos
+distM <- dist(normalized_matrix)
+clus <- hclust(distM)
+print(clus)
+plot(clus)
+
+# PCA
+pca_result <- prcomp(normalized_matrix, center = TRUE, scale. = TRUE)
+summary(pca_result)
+plot(pca_result, type = "l",
+     main="Varianza explicada por componentes principales")
+library(ggfortify)
+pca_plot <- autoplot(pca_result, cata = normalized_matrix)
+pca_plot
+
+biplot(pca_result)
+
+# Revisar el otro método para hacer PCAs y sus plots
+
+# K-means
+kmeans_model <- kmeans(normalized_matrix, centers = 3)
+summary(kmeans_model)
+fviz_cluster(kmeans_model, data = normalized_matrix, 
+             geom = c("point", "text"), main = paste("Clusters de pacientes con k-means"))
 
 ###--------------------------------------------------------------------------###
-### Analisis de expresión de genes con WGCNA
+# Anslisis de datos genéticos
 ###--------------------------------------------------------------------------###
-# Instalar Bioconductor
-#if (!require("BiocManager", quietly = TRUE))
-#install.packages("BiocManager")
-#BiocManager::install(version = "3.19")
-
-# Instalar y cargar el paquete WGCNA
-BiocManager::install("WGCNA")
-library("WGCNA")
-
-# Lectura de datos
-rna_data <- read_csv2("data_mrna_seq_v2_rsem.csv")
-col_select <- rna_data[, -1]
-
-# Transformación de tabla para el análisis
-rna_longer <- t(col_select)
-colnames(rna_longer) <- rna_longer[1,]
-rna_longer <- rna_longer[-1, ]
-
-# look for missing values
-gsg = goodSamplesGenes(rna_longer, verbose = 3);
-gsg$allOk
-
-sampleTree <- hclust(dist(rna_longer), method = "average")
-plot(sampleTree)
-
-clust = cutreeStatic(sampleTree, cutHeight = 31000, minSize = 10)
+mutations <- genetics$mutation
+cna <- genetics$cna
+structural_variant <- genetics$structural_variant
