@@ -75,9 +75,9 @@ clinical_brca_wide$PFS_STATUS <- factor(clinical_brca_wide$PFS_STATUS,
 levels(clinical_brca_wide$PFS_STATUS)
 
 #ALTERNATIVA paquete  "ggsurvfit" --> mejor este se puede editar con ggplot2
-p <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wide) %>%
+pfs <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wide) %>%
   ggsurvfit(linewidth = 1, color = "#607B8B") +  # Cambiar el color de la línea
-  add_confidence_interval(fill = "#B0E2FF") +  # Cambiar el color del sombreado
+  add_confidence_interval(fill = "#B0E2FF") +  # Cambiar el color del sombreado que representa el CI
   add_risktable() +  # Cambiar el estilo de la tabla de riesgo
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
@@ -85,8 +85,31 @@ p <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wide
     y = "Progression free survival",
     x= " Time (months)",
     title = "PFS"
-  )
-p
+  ) +
+  add_censor_mark(color = "#607B8B", shape = 124, size = 2) 
+
+pfs
+
+
+# Zoom de los 10 primeros años (hasta 120 meses)
+pfs_120m <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wide) %>%
+  ggsurvfit(linewidth = 1, color = "#607B8B") +  # Cambiar el color de la línea
+  add_confidence_interval(fill = "#B0E2FF") +  # Cambiar el color del sombreado que representa el CI
+  add_risktable(limits = c(0, 120)) +  # Añadir la tabla de riesgo con límites ajustados
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x = "Time (months)",
+    title = "PFS"
+  ) +
+  add_censor_mark(color = "#607B8B", shape = 124, size = 2) +  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
+  
+pfs_120m
+
+
+
 
 ### PFS por subtipos
 pfs_subtype <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
@@ -97,9 +120,47 @@ pfs_subtype <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = cli
     y = "Progression free survival",
     x= " Time (months)",
     title = "PFS by subtype"
-  )
+  ) +
+  add_censor_mark(color = "#607B8B", shape = 124, size = 2)  # Añadir marcas de censura
 
 pfs_subtype
+
+
+### PFS por subtipos  Zoom de los 10 primeros años (hasta 120 meses)
+pfs_subtype_120m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "PFS by subtype"
+  ) +
+  add_censor_mark(color = "#607B8B", shape = 124, size = 2) +  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
+
+
+
+pfs_subtype_120m
+
+
+### PFS por subtipos  Zoom de los 10 primeros años (hasta 3 años = 36 meses)
+pfs_subtype_36m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "PFS by subtype"
+  ) +
+  add_censor_mark(color = "#607B8B", shape = 124, size = 2) +  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
+
+
+
+pfs_subtype_36m
+
 
 
 ### Análisis exploratorios: Correlación de variables numéricas
@@ -210,3 +271,31 @@ fviz_cluster(kmeans_model, data = normalized_matrix,
 mutations <- genetics$mutation
 cna <- genetics$cna
 structural_variant <- genetics$structural_variant
+
+# Analisis mutations 
+mutations$mutationType <- as.factor(mutations$mutationType)
+
+# Calcular el número total de mutaciones, el número de muestras únicas con al menos una mutación,
+# y el porcentaje de estas muestras por gen
+summary_data <- mutations %>%
+  group_by(hugoGeneSymbol) %>%
+  summarise(
+    total_mutations = n(),  # Número total de mutaciones en este gen
+    unique_samples = n_distinct(sampleId),  # Número de muestras únicas con al menos una mutación en este gen
+    total_samples = n_distinct(mutations$sampleId)  # Número total de muestras en todo el dataset
+  ) %>%
+  mutate(
+    percent_samples_with_mutation = (unique_samples / total_samples) * 100  # Porcentaje de muestras con al menos una mutación en este gen
+  ) %>%
+  arrange(desc(percent_samples_with_mutation)) %>%
+  mutate(percent_samples_with_mutation = round(percent_samples_with_mutation, 2))
+
+
+
+library(gt)
+
+table_mutations <- summary_data %>%
+  gt() %>%
+  cols_hide(columns = "total_samples")
+
+table_mutations
