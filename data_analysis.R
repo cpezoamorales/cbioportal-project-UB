@@ -162,6 +162,54 @@ pfs_subtype_36m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data =
 pfs_subtype_36m
 
 
+### PFS por AJCC stage
+pfs_stage <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "PFS by STAGE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
+
+pfs_stage
+
+
+### PFS por AJCC stage en 120m
+pfs_stage_120m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "PFS by STAGE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
+
+pfs_stage_120m
+
+
+### PFS por Lymph node
+pfs_stage <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "PFS by STAGE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
+
+pfs_stage
+
+
 
 ### Análisis exploratorios: Correlación de variables numéricas
 clinical_brca_numeric <- clinical_brca_wide %>% 
@@ -272,8 +320,11 @@ mutations <- genetics$mutation
 cna <- genetics$cna
 structural_variant <- genetics$structural_variant
 
-# Analisis mutations 
+# MUTATIONS analysis
 mutations$mutationType <- as.factor(mutations$mutationType)
+levels(mutations$mutationType)
+mutations$variantType <- as.factor(mutations$variantType)
+levels(mutations$variantType)
 
 # Calcular el número total de mutaciones, el número de muestras únicas con al menos una mutación,
 # y el porcentaje de estas muestras por gen
@@ -290,8 +341,6 @@ summary_data <- mutations %>%
   arrange(desc(percent_samples_with_mutation)) %>%
   mutate(percent_samples_with_mutation = round(percent_samples_with_mutation, 2))
 
-
-
 library(gt)
 
 table_mutations <- summary_data %>%
@@ -299,3 +348,70 @@ table_mutations <- summary_data %>%
   cols_hide(columns = "total_samples")
 
 table_mutations
+
+# STRUCTURAL VAARIANTS analysis
+summary_data_structural <- structural_variant %>%
+  group_by(site1HugoSymbol) %>%
+  summarise(
+    total_mutations = n(),  # Número total de SV en este gen
+    unique_samples = n_distinct(sampleId),  # Número de muestras únicas con al menos una SV en este gen
+    total_samples = n_distinct(structural_variant$sampleId)  # Número total de muestras en todo el dataset
+  ) %>%
+  mutate(
+    percent_samples_with_sv = (unique_samples / total_samples) * 100  # Porcentaje de muestras con al menos una SV  en este gen
+  ) %>%
+  arrange(desc(percent_samples_with_sv)) %>%
+  mutate(percent_samples_with_sv = round(percent_samples_with_sv, 2))
+
+
+table_sv <- summary_data_structural %>%
+  gt() %>%
+  cols_hide(columns = "total_samples")
+
+table_sv
+
+#COPY NUMBER ALTERATIONS
+
+cna$alteration <- as.factor(cna$alteration)
+
+levels(cna$alteration)
+
+cna <- cna %>% 
+  mutate(alteration_type = case_when(
+    alteration == -2 ~ "HOMDEL",
+    alteration == 2 ~ "AMP"
+  ))
+
+
+summary_data_cna <- cna %>% #HAY UN PROBLEMA QUE LO HACE PERO TARDA MUCHO EN CALCULARLO porque hay >446.000 lineas
+  group_by(hugoGeneSymbol, alteration_type) %>%
+  summarise(
+    total_mutations = n(),  # Número total de CNA en este gen
+    unique_samples = n_distinct(sampleId),  # Número de muestras únicas con al menos una CNA en este gen
+    total_samples = n_distinct(cna$sampleId)
+    # Número total de muestras en todo el dataset
+  ) %>%
+  mutate(
+    percent_samples_with_cna = (unique_samples / total_samples) * 100  # Porcentaje de muestras con al menos una CNA  en este gen
+  ) %>%
+  arrange(desc(percent_samples_with_cna)) %>%
+  mutate(percent_samples_with_cna = round(percent_samples_with_cna, 2))
+
+
+table_cna <- summary_data_cna %>%
+  gt() %>%
+  cols_hide(columns =  c("total_samples", "total_mutations"))
+
+table_cna
+
+
+############### HEATMAP ####################
+#Provar de hacer un heatmap con mutaciones
+
+if(!requireNamespace('BiocManager',quietly = T)) install.packages("BiocManager")
+BiocManager::install("ComplexHeatmap")
+
+library(ComplexHeatmap)
+library(circlize)
+
+structural_variant$site2EffectOnFrame <- as.factor(structural_variant$site2EffectOnFrame)
