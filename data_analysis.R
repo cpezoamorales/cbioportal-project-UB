@@ -13,9 +13,38 @@ if(!require("corrplot")){install.packages("corrplot")}
 if(!require("caret")){install.packages("caret")}
 if(!require("cluster")){install.packages("cluster")}
 if(!require("factoextra")){install.packages("factoextra")}
+if(!require("ggfortify")){install.packages("ggfortify")}
+if(!require("gt")){install.packages("gt")}
+if(!require("circlize")){install.packages("circlize")}
+if(!require("patchwork")){install.packages("patchwork")}
+
+if(!requireNamespace('BiocManager',quietly = T)) install.packages("BiocManager")
+BiocManager::install("ComplexHeatmap")
+library(ComplexHeatmap)
+
+
 
 # Carga de datos crusdos almacenados previamente en archivo RData
 load("data.RData")
+
+data_oncotree <- read.csv2("Oncotree_Code.full.csv")
+data_oncotree <- data_oncotree %>% rename(patientId = Patient.ID)
+
+data_tmb <- read.csv2("TMB_(nonsynonymous).csv")
+data_tmb <- data_tmb %>% rename(patientId = Patient.ID)
+
+data_fraction_gen_al <- read.csv2("Mutation_Count_vs_Fraction_Genome_Altered.csv")
+data_fraction_gen_al <- data_fraction_gen_al %>% rename(patientId = Patient.ID)
+
+data_cancer_type <- read.csv2("Cancer_Type_Detailed.csv")
+data_cancer_type <- data_cancer_type %>% rename(patientId = Patient.ID)
+
+# Seleccionar solo las columnas necesarias de cada dataset para hacer el merge
+data_oncotree <- data_oncotree %>% select(patientId, Oncotree.Code)
+data_tmb <- data_tmb %>% select(patientId, TMB..nonsynonymous.)
+data_fraction_gen_al <- data_fraction_gen_al %>% select(patientId, Fraction.Genome.Altered, Mutation.Count)
+data_cancer_type <- data_cancer_type %>% select(patientId, Cancer.Type.Detailed)
+
 
 # Transformar la tabla en Wide con pivot_wider, crea columnas viniendo de muchas filas
 clinical_brca_wide <- clinical_brca %>%
@@ -25,6 +54,16 @@ clinical_brca_wide <- clinical_brca %>%
 str(clinical_brca_wide)
 
 length(unique(clinical_brca$patientId))
+
+
+# Realizar los merges para añadir las variables Oncotree, TMB, Fraccion de gen alterada y cancer type que estaban en otras tablas a parte
+clinical_brca_wide <- clinical_brca_wide %>%
+  left_join(data_oncotree, by = "patientId") %>%
+  left_join(data_tmb, by = "patientId") %>%
+  left_join(data_fraction_gen_al, by = "patientId") %>%
+  left_join(data_cancer_type, by = "patientId")
+
+
 
 
 #Transformar variables numericas a numericas y factores
@@ -65,6 +104,10 @@ tbl <- tbl_summary(
   italicize_levels()
 
 tbl
+
+
+
+#### PFS #####
 
 # Cambiar los niveles de la variable PFS_STATUS
 clinical_brca_wide$PFS_STATUS <- factor(clinical_brca_wide$PFS_STATUS, 
@@ -114,6 +157,7 @@ pfs_120m
 ### PFS por subtipos
 pfs_subtype <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
@@ -129,6 +173,7 @@ pfs_subtype
 ### PFS por subtipos  Zoom de los 10 primeros años (hasta 120 meses)
 pfs_subtype_120m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
@@ -147,6 +192,7 @@ pfs_subtype_120m
 ### PFS por subtipos  Zoom de los 10 primeros años (hasta 3 años = 36 meses)
 pfs_subtype_36m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
@@ -157,10 +203,30 @@ pfs_subtype_36m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data =
   add_censor_mark(color = "#607B8B", shape = 124, size = 2) +  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
 
-
-
 pfs_subtype_36m
 
+cna <- cna %>% 
+  mutate(alteration_type = case_when(
+    alteration == -2 ~ "HOMDEL",
+    alteration == 2 ~ "AMP"
+  ))
+
+
+
+#Crear nova variable group Stage
+
+clinical_brca_wide <- clinical_brca_wide %>% 
+  mutate(group_stage = case_when(
+    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE I" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IA" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IB")  ~ "Stage I ",
+    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE II" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIA" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIB")  ~ "Stage II ",
+    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE III" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIIA" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIIB" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIIC")  ~ "Stage III ",
+    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IV") ~ "Stage IV ",
+    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE X") ~ "Stage X",
+))
+
+print(as_tibble(clinical_brca_wide) %>%
+        select(AJCC_PATHOLOGIC_TUMOR_STAGE, group_stage) %>%
+        arrange(AJCC_PATHOLOGIC_TUMOR_STAGE), n = 1084)
 
 ### PFS por AJCC stage
 pfs_stage <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) %>% 
@@ -176,6 +242,7 @@ pfs_stage <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR
   coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
 
 pfs_stage
+
 
 
 ### PFS por AJCC stage en 120m
@@ -194,22 +261,182 @@ pfs_stage_120m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_
 pfs_stage_120m
 
 
-### PFS por Lymph node
-pfs_stage <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) %>% 
+### PFS por Group stage stage
+pfs_stage_group <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "PFS by GROUP STAGE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
+
+pfs_stage_group
+
+
+
+### PFS por Group stage stage en 120m
+pfs_stage_120m_group <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
     y = "Progression free survival",
     x= " Time (months)",
-    title = "PFS by STAGE"
+    title = "PFS by GROUP STAGE"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
-  coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
+  coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
 
-pfs_stage
+pfs_stage_120m_group
 
 
+### PFS por Lymph node
+pfs_lympnodes <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_PRESENTATION_ASSESSMENT, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "PFS by LYMPH NODES"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2)
+
+pfs_lympnodes
+
+### PFS por Race
+pfs_race <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ RACE, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "PFS by RACE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2)
+
+pfs_race
+
+### PFS por Cancer Type
+pfs_cancer_type <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Cancer.Type.Detailed , data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "PFS by Cancer Type"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2)
+
+pfs_cancer_type
+
+
+clinical_brca_wide$Oncotree.Code <- as.factor(clinical_brca_wide$Oncotree.Code)
+
+### PFS por Oncotree
+pfs_oncotree <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Oncotree.Code, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "PFS by CANCER TYPE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2)
+
+pfs_oncotree
+
+
+#Grupos de age
+clinical_brca_wide <- clinical_brca_wide %>%
+  mutate(age_group = case_when(
+    AGE < 40 ~ "<40",
+    AGE >= 40 & AGE <= 60 ~ "40-60",
+    AGE > 60 ~ ">60"
+  ))
+
+
+### PFS por Age group
+pfs_age <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ age_group, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "PFS by AGE GROUP"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2)
+
+pfs_age
+
+#HR del modelo de cox
+cox_pfs_age <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ age_group, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_pfs_age_tbl <- tbl_regression(cox_pfs_age, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_pfs_age_tbl
+
+
+
+combined_plot <- pfs_age + as_gt(cox_pfs_age_tbl) + plot_layout(ncol = 1)
+
+
+#### OS #####
+
+# Cambiar los niveles de la variable OS_STATUS
+clinical_brca_wide$OS_STATUS <- factor(clinical_brca_wide$OS_STATUS, 
+                                        levels = c("0:LIVING", "1:DECEASED"), 
+                                        labels = c("0", "1"))
+
+# Verificar los nuevos niveles
+levels(clinical_brca_wide$OS_STATUS)
+
+
+#ALTERNATIVA paquete  "ggsurvfit" --> mejor este se puede editar con ggplot2
+os <- survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ 1, data = clinical_brca_wide) %>%
+  ggsurvfit(linewidth = 1, color = "#607B8B") +  # Cambiar el color de la línea
+  add_confidence_interval(fill = "#B0E2FF") +  # Cambiar el color del sombreado que representa el CI
+  add_risktable() +  # Cambiar el estilo de la tabla de riesgo
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Overall survival",
+    x= " Time (months)",
+    title = "OS"
+  ) +
+  add_censor_mark(color = "#607B8B", shape = 124, size = 2) 
+
+os
+
+
+### OS por subtipos
+os_subtype <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>%
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Overall survival",
+    x= " Time (months)",
+    title = "OS by subtype"
+  ) +
+  add_censor_mark(color = "#607B8B", shape = 124, size = 2)  # Añadir marcas de censura
+
+os_subtype
+
+
+
+####### VARIABLES NUMERICAS ###########
 
 ### Análisis exploratorios: Correlación de variables numéricas
 clinical_brca_numeric <- clinical_brca_wide %>% 
@@ -299,7 +526,6 @@ pca_result <- prcomp(normalized_matrix, center = TRUE, scale. = TRUE)
 summary(pca_result)
 plot(pca_result, type = "l",
      main="Varianza explicada por componentes principales")
-library(ggfortify)
 pca_plot <- autoplot(pca_result, cata = normalized_matrix)
 pca_plot
 
@@ -340,8 +566,6 @@ summary_data <- mutations %>%
   ) %>%
   arrange(desc(percent_samples_with_mutation)) %>%
   mutate(percent_samples_with_mutation = round(percent_samples_with_mutation, 2))
-
-library(gt)
 
 table_mutations <- summary_data %>%
   gt() %>%
@@ -406,12 +630,6 @@ table_cna
 
 
 ############### HEATMAP ####################
-#Provar de hacer un heatmap con mutaciones
-
-if(!requireNamespace('BiocManager',quietly = T)) install.packages("BiocManager")
-BiocManager::install("ComplexHeatmap")
-
-library(ComplexHeatmap)
-library(circlize)
+#Provar de hacer un heatmap con mutaciones (mutationType i variantType --> mirar les variables que son una N)
 
 structural_variant$site2EffectOnFrame <- as.factor(structural_variant$site2EffectOnFrame)
