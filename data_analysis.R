@@ -134,6 +134,7 @@ pfs <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wi
 pfs
 
 
+
 # Zoom de los 10 primeros años (hasta 120 meses)
 pfs_120m <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wide) %>%
   ggsurvfit(linewidth = 1, color = "#607B8B") +  # Cambiar el color de la línea
@@ -169,6 +170,13 @@ pfs_subtype <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = cli
 
 pfs_subtype
 
+#HR del modelo de cox
+cox_pfs_subtype <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_pfs_subtype_tbl <- tbl_regression(cox_pfs_subtype, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_pfs_subtype_tbl
+
 
 ### PFS por subtipos  Zoom de los 10 primeros años (hasta 120 meses)
 pfs_subtype_120m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
@@ -189,7 +197,7 @@ pfs_subtype_120m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data 
 pfs_subtype_120m
 
 
-### PFS por subtipos  Zoom de los 10 primeros años (hasta 3 años = 36 meses)
+### PFS por subtipos  Zoom de los 3 primeros años (hasta 3 años = 36 meses)
 pfs_subtype_36m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
   add_risktable() + 
@@ -204,13 +212,6 @@ pfs_subtype_36m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data =
   coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
 
 pfs_subtype_36m
-
-cna <- cna %>% 
-  mutate(alteration_type = case_when(
-    alteration == -2 ~ "HOMDEL",
-    alteration == 2 ~ "AMP"
-  ))
-
 
 
 #Crear nova variable group Stage
@@ -242,6 +243,14 @@ pfs_stage <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR
   coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
 
 pfs_stage
+
+#HR del modelo de cox
+cox_pfs_stage <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_pfs_stage_tbl <- tbl_regression(cox_pfs_stage, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_pfs_stage_tbl
+
 
 
 
@@ -277,6 +286,13 @@ pfs_stage_group <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ group_stage, da
 
 pfs_stage_group
 
+#HR del modelo de cox
+cox_pfs_stage_group <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_pfs_stage_group_tbl <- tbl_regression(cox_pfs_stage_group, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_pfs_stage_group_tbl
+
 
 
 ### PFS por Group stage stage en 120m
@@ -310,6 +326,13 @@ pfs_lympnodes <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ PRIMARY_LYMPH_NOD
 
 pfs_lympnodes
 
+#HR del modelo de cox
+cox_pfs_lymphnodes <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_PRESENTATION_ASSESSMENT, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_pfs_lymphnodes_tbl <- tbl_regression(cox_pfs_lymphnodes, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_pfs_lymphnodes_tbl
+
 ### PFS por Race
 pfs_race <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ RACE, data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
@@ -325,6 +348,13 @@ pfs_race <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ RACE, data = clinical_
 
 pfs_race
 
+#HR del modelo de cox
+cox_pfs_race <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ RACE, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_pfs_race_tbl <- tbl_regression(cox_pfs_race, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_pfs_race_tbl
+
 ### PFS por Cancer Type
 pfs_cancer_type <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Cancer.Type.Detailed , data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
@@ -338,6 +368,14 @@ pfs_cancer_type <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Cancer.Type.Det
   add_censor_mark(color = "gray50", shape = 124, size = 2)
 
 pfs_cancer_type
+
+
+#HR del modelo de cox
+cox_pfs_cancer_type <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Cancer.Type.Detailed, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_pfs_cancer_type_tbl <- tbl_regression(cox_pfs_cancer_type, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_pfs_cancer_type_tbl
 
 
 clinical_brca_wide$Oncotree.Code <- as.factor(clinical_brca_wide$Oncotree.Code)
@@ -355,6 +393,15 @@ pfs_oncotree <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Oncotree.Code, dat
   add_censor_mark(color = "gray50", shape = 124, size = 2)
 
 pfs_oncotree
+
+
+#HR del modelo de cox
+cox_pfs_oncotree <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Oncotree.Code, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_pfs_oncotree_tbl <- tbl_regression(cox_pfs_oncotree, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_pfs_oncotree_tbl
+
 
 
 #Grupos de age
@@ -386,10 +433,6 @@ cox_pfs_age <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ age_group, data = cli
 cox_pfs_age_tbl <- tbl_regression(cox_pfs_age, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 
 cox_pfs_age_tbl
-
-
-
-combined_plot <- pfs_age + as_gt(cox_pfs_age_tbl) + plot_layout(ncol = 1)
 
 
 #### OS #####
@@ -433,6 +476,248 @@ os_subtype <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = clinic
   add_censor_mark(color = "#607B8B", shape = 124, size = 2)  # Añadir marcas de censura
 
 os_subtype
+
+#HR del modelo de cox
+cox_os_subtype <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_os_subtype_tbl <- tbl_regression(cox_os_subtype, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_os_subtype_tbl
+
+
+### OS por subtipos  Zoom de los 10 primeros años (hasta 120 meses)
+os_subtype_120m <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "OS by subtype"
+  ) +
+  add_censor_mark(color = "#607B8B", shape = 124, size = 2) +  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
+
+
+
+os_subtype_120m
+
+
+### OS por subtipos  Zoom de los 3 primeros años (hasta 3 años = 36 meses)
+os_subtype_36m <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "OS by subtype"
+  ) +
+  add_censor_mark(color = "#607B8B", shape = 124, size = 2) +  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
+
+os_subtype_36m
+
+
+
+
+### OS por AJCC stage
+os_stage <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "OS by STAGE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
+
+os_stage
+
+#HR del modelo de cox
+cox_os_stage <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_os_stage_tbl <- tbl_regression(cox_os_stage, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_os_stage_tbl
+
+
+
+
+### OS por AJCC stage en 120m
+os_stage_120m <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "OS by STAGE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
+
+os_stage_120m
+
+
+### OS por Group stage stage
+os_stage_group <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "OS by GROUP STAGE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
+
+os_stage_group
+
+#HR del modelo de cox
+cox_os_stage_group <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_os_stage_group_tbl <- tbl_regression(cox_os_stage_group, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_os_stage_group_tbl
+
+
+
+### OS por Group stage stage en 120m
+os_stage_120m_group <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "OS by GROUP STAGE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
+
+os_stage_120m_group
+
+
+### OS por Lymph node
+os_lympnodes <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_PRESENTATION_ASSESSMENT, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "OS by LYMPH NODES"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2)
+
+os_lympnodes
+
+#HR del modelo de cox
+cox_os_lymphnodes <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_PRESENTATION_ASSESSMENT, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_os_lymphnodes_tbl <- tbl_regression(cox_os_lymphnodes, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_os_lymphnodes_tbl
+
+### OS por Race
+os_race <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ RACE, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "OS by RACE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2)
+
+os_race
+
+#HR del modelo de cox
+cox_os_race <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ RACE, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_os_race_tbl <- tbl_regression(cox_os_race, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_os_race_tbl
+
+### OS por Cancer Type
+os_cancer_type <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ Cancer.Type.Detailed , data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "OS by Cancer Type"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2)
+
+os_cancer_type
+
+
+#HR del modelo de cox
+cox_os_cancer_type <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ Cancer.Type.Detailed, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_os_cancer_type_tbl <- tbl_regression(cox_os_cancer_type, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_os_cancer_type_tbl
+
+
+
+### OS por Oncotree
+os_oncotree <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ Oncotree.Code, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "OS by CANCER TYPE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2)
+
+os_oncotree
+
+
+#HR del modelo de cox
+cox_os_oncotree <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ Oncotree.Code, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_os_oncotree_tbl <- tbl_regression(cox_os_oncotree, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_os_oncotree_tbl
+
+
+### OS por Age group
+os_age <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ age_group, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Progression free survival",
+    x= " Time (months)",
+    title = "OS by AGE GROUP"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2)
+
+os_age
+
+#HR del modelo de cox
+cox_os_age <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ age_group, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_os_age_tbl <- tbl_regression(cox_os_age, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_os_age_tbl
+
+
 
 
 
@@ -632,4 +917,143 @@ table_cna
 ############### HEATMAP ####################
 #Provar de hacer un heatmap con mutaciones (mutationType i variantType --> mirar les variables que son una N)
 
-structural_variant$site2EffectOnFrame <- as.factor(structural_variant$site2EffectOnFrame)
+# Filtrar y organizar los datos
+mutations_filtered <- mutations %>%
+  select(hugoGeneSymbol, patientId, mutationType)
+
+
+# Contar las combinaciones duplicadas de patientId y hugoGeneSymbol
+duplicates <- mutations_filtered %>%
+  group_by(patientId, hugoGeneSymbol) %>%
+  mutate(num_types = n_distinct(mutationType)) %>%
+  filter(num_types > 1)
+
+# Identificar mutationType únicos y mantenerlos como están si son iguales
+mutations_filtered_unique <- mutations_filtered %>%
+  anti_join(duplicates, by = c("patientId", "hugoGeneSymbol", "mutationType")) %>%
+  bind_rows(
+    duplicates %>%
+      group_by(patientId, hugoGeneSymbol) %>%
+      mutate(
+        mutationType = case_when(
+          num_types > 1 ~ paste(sort(unique(mutationType)), collapse = " + "),
+          TRUE ~ as.character(mutationType)
+        )
+      ) %>%
+      distinct(patientId, hugoGeneSymbol, mutationType)
+  )
+
+# Mostrar el resultado
+mutations_filtered_unique
+
+mutations_filtered_unique$mutationType <- as.factor(mutations_filtered_unique$mutationType)
+
+levels(mutations_filtered_unique$mutationType) ##PROBLEMA HI HA MOLTS PACIENTS AMB MUTACIONS de diferents tipus
+
+
+# Ver mutaciones específicas para un paciente y un gen
+specific_mutations <- mutations_filtered %>%
+  filter(patientId == "TCGA-3C-AALI" & hugoGeneSymbol == "ATG2A")
+
+# Mostrar las mutaciones
+specific_mutations
+
+
+###
+
+
+# Crear la matriz de mutaciones
+mutation_types <- mutations_filtered_unique %>%
+  pivot_wider(names_from = hugoGeneSymbol, values_from = mutationType, values_fill = list(mutationType = NA)) %>%
+  column_to_rownames("patientId")
+
+
+########## PROVA 2 CON OTRA VARIABLE #########
+
+# Filtrar y organizar los datos
+mutations_filtered <- mutations %>%
+  select(hugoGeneSymbol, patientId, variantType)
+
+# Crear la matriz de mutaciones
+mutation_matrix <- mutations_filtered %>%
+  distinct(patientId, hugoGeneSymbol) %>%
+  mutate(value = 1) %>%
+  pivot_wider(names_from = hugoGeneSymbol, values_from = value, values_fill = list(value = 0)) %>%
+  column_to_rownames("patientId")
+
+# Crear una tabla separada para los tipos de variantes
+variant_types <- mutations_filtered %>%
+  pivot_wider(names_from = hugoGeneSymbol, values_from = variantType, values_fill = list(variantType = NA)) %>%
+  column_to_rownames("patientId")
+
+# Identificar combinaciones duplicadas
+duplicates <- mutations_filtered %>%
+  group_by(patientId, hugoGeneSymbol) %>%
+  mutate(num_types = n_distinct(variantType)) %>%
+  filter(num_types > 1)
+
+# Mostrar los variantTypes de los duplicados
+print(duplicates)
+
+
+
+##PROVAR AJUNTAR:
+
+# Crear datos únicos
+mutations_filtered_unique <- mutations_filtered %>%
+  anti_join(duplicates, by = c("patientId", "hugoGeneSymbol", "variantType")) %>%
+  bind_rows(
+    duplicates %>%
+      group_by(patientId, hugoGeneSymbol) %>%
+      summarise(
+        variantType = paste(sort(unique(variantType)), collapse = " + ")
+      )
+  ) %>%
+  distinct(patientId, hugoGeneSymbol, variantType)
+
+# Mostrar el resultado de los datos únicos
+print(mutations_filtered_unique)
+
+mutations_filtered_unique$variantType <- as.factor(mutations_filtered_unique$variantType)
+
+levels(mutations_filtered_unique$variantType) ##PROBLEMA HI HA MOLTS PACIENTS AMB MUTACIONS de diferents tipus
+
+
+# Crear la matriz de mutaciones
+mutation_matrix <- mutations_filtered_unique %>%
+  distinct(patientId, hugoGeneSymbol) %>%
+  mutate(value = 1) %>%
+  pivot_wider(names_from = hugoGeneSymbol, values_from = value, values_fill = list(value = 0)) %>%
+  column_to_rownames("patientId")
+
+# Crear una tabla separada para los tipos de variantes
+variant_types <- mutations_filtered_unique %>%
+  pivot_wider(names_from = hugoGeneSymbol, values_from = variantType, values_fill = list(variantType = NA)) %>%
+  column_to_rownames("patientId")
+
+# Definir los colores para los tipos de variantes
+variant_types_unique <- na.omit(unique(unlist(variant_types)))
+variant_colors <- setNames(brewer.pal(length(variant_types_unique), "Set3"), variant_types_unique)
+
+# Crear el heatmap
+Heatmap(as.matrix(mutation_matrix),
+        name = "Variants",
+        col = colorRamp2(c(0, 1), c("white", "red")),
+        show_row_names = TRUE,
+        show_column_names = TRUE,
+        cluster_rows = TRUE,
+        cluster_columns = TRUE,
+        column_title = "Genes",
+        row_title = "Patients",
+        top_annotation = HeatmapAnnotation(
+          df = as.data.frame(t(variant_types)),  # Transponer para que los pacientes sean filas
+          col = list(variantType = variant_colors),
+          annotation_legend_param = list(
+            title = "Variant Types",
+            at = names(variant_colors),
+            labels = names(variant_colors)
+          )
+        )
+)
+
+#CREO QUE HAY UN PROBLEMA PORQUE HAY DEMASIADOS GENES INVOLUCRADOS --> LO QUE HAREMOS SERA SELECCIONAR LOS 30 CON LA MUTACIÓN MÁS FRECUENTE Y MOSTRARLO
