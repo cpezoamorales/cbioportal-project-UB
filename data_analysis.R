@@ -17,9 +17,10 @@ if(!require("ggfortify")){install.packages("ggfortify")}
 if(!require("gt")){install.packages("gt")}
 if(!require("circlize")){install.packages("circlize")}
 if(!require("patchwork")){install.packages("patchwork")}
+if(!require("RColorBrewer")){install.packages("RColorBrewer")}
 
 if(!requireNamespace('BiocManager',quietly = T)) install.packages("BiocManager")
-BiocManager::install("ComplexHeatmap")
+
 library(ComplexHeatmap)
 
 
@@ -915,145 +916,61 @@ table_cna
 
 
 ############### HEATMAP ####################
-#Provar de hacer un heatmap con mutaciones (mutationType i variantType --> mirar les variables que son una N)
 
-# Filtrar y organizar los datos
-mutations_filtered <- mutations %>%
-  select(hugoGeneSymbol, patientId, mutationType)
-
-
-# Contar las combinaciones duplicadas de patientId y hugoGeneSymbol
-duplicates <- mutations_filtered %>%
-  group_by(patientId, hugoGeneSymbol) %>%
-  mutate(num_types = n_distinct(mutationType)) %>%
-  filter(num_types > 1)
-
-# Identificar mutationType únicos y mantenerlos como están si son iguales
-mutations_filtered_unique <- mutations_filtered %>%
-  anti_join(duplicates, by = c("patientId", "hugoGeneSymbol", "mutationType")) %>%
-  bind_rows(
-    duplicates %>%
-      group_by(patientId, hugoGeneSymbol) %>%
-      mutate(
-        mutationType = case_when(
-          num_types > 1 ~ paste(sort(unique(mutationType)), collapse = " + "),
-          TRUE ~ as.character(mutationType)
-        )
-      ) %>%
-      distinct(patientId, hugoGeneSymbol, mutationType)
-  )
-
-# Mostrar el resultado
-mutations_filtered_unique
-
-mutations_filtered_unique$mutationType <- as.factor(mutations_filtered_unique$mutationType)
-
-levels(mutations_filtered_unique$mutationType) ##PROBLEMA HI HA MOLTS PACIENTS AMB MUTACIONS de diferents tipus
-
-
-# Ver mutaciones específicas para un paciente y un gen
-specific_mutations <- mutations_filtered %>%
-  filter(patientId == "TCGA-3C-AALI" & hugoGeneSymbol == "ATG2A")
-
-# Mostrar las mutaciones
-specific_mutations
-
-
-###
-
-
-# Crear la matriz de mutaciones
-mutation_types <- mutations_filtered_unique %>%
-  pivot_wider(names_from = hugoGeneSymbol, values_from = mutationType, values_fill = list(mutationType = NA)) %>%
-  column_to_rownames("patientId")
-
-
-########## PROVA 2 CON OTRA VARIABLE #########
-
-# Filtrar y organizar los datos
+# Crear data con solo filas que nos interesan
 mutations_filtered <- mutations %>%
   select(hugoGeneSymbol, patientId, variantType)
 
-# Crear la matriz de mutaciones
-mutation_matrix <- mutations_filtered %>%
-  distinct(patientId, hugoGeneSymbol) %>%
-  mutate(value = 1) %>%
-  pivot_wider(names_from = hugoGeneSymbol, values_from = value, values_fill = list(value = 0)) %>%
-  column_to_rownames("patientId")
+# Calcular la prevalencia de mutaciones para cada gen y tipo de variante
+gene_variant_prevalence <- mutations_filtered %>%
+  group_by(hugoGeneSymbol, variantType) %>%
+  summarise(prevalence = n(), .groups = 'drop') %>%
+  arrange(desc(prevalence))
 
-# Crear una tabla separada para los tipos de variantes
-variant_types <- mutations_filtered %>%
-  pivot_wider(names_from = hugoGeneSymbol, values_from = variantType, values_fill = list(variantType = NA)) %>%
-  column_to_rownames("patientId")
+# Seleccionar las 50 mutaciones más prevalentes
+top_mutations <- gene_variant_prevalence %>%
+  slice_head(n = 50) %>%
+  select(hugoGeneSymbol, variantType)
 
-# Identificar combinaciones duplicadas
-duplicates <- mutations_filtered %>%
+
+# Filtrar el data frame original para incluir solo las mutaciones seleccionadas
+mutations_filtered_top <- mutations_filtered %>%
+  semi_join(top_mutations, by = c("hugoGeneSymbol", "variantType"))
+
+# Paso 1: Pivotar la tabla de larga a ancha
+mutations_wide <- mutations_filtered_top %>%
   group_by(patientId, hugoGeneSymbol) %>%
-  mutate(num_types = n_distinct(variantType)) %>%
-  filter(num_types > 1)
+  summarise(variantType = paste(unique(variantType), collapse = ";"), .groups = 'drop') %>%
+  pivot_wider(names_from = hugoGeneSymbol, values_from = variantType, values_fill = list(variantType = "WT"))
 
-# Mostrar los variantTypes de los duplicados
-print(duplicates)
+# Ver el resultado
+print(mutations_wide)
 
+# Crear una versión modificada de la tabla para el heatmap
+mutations_wide_modified <- mutations_wide %>%
+  pivot_longer(-patientId, names_to = "gene", values_to = "variantType") %>%
+  mutate(variantType = factor(variantType, levels = c("WT", "SNP", "INS", "DEL", "CNV", "AMP", "HOMD"))) %>%
+  pivot_wider(names_from = gene, values_from = variantType)
 
+# Convertir a matriz
+mutation_matrix <- as.matrix(mutations_wide_modified %>% select(-patientId))
 
-##PROVAR AJUNTAR:
+# Asignar los nombres de las filas
+rownames(mutation_matrix) <- mutations_wide_modified$patientId
 
-# Crear datos únicos
-mutations_filtered_unique <- mutations_filtered %>%
-  anti_join(duplicates, by = c("patientId", "hugoGeneSymbol", "variantType")) %>%
-  bind_rows(
-    duplicates %>%
-      group_by(patientId, hugoGeneSymbol) %>%
-      summarise(
-        variantType = paste(sort(unique(variantType)), collapse = " + ")
-      )
-  ) %>%
-  distinct(patientId, hugoGeneSymbol, variantType)
-
-# Mostrar el resultado de los datos únicos
-print(mutations_filtered_unique)
-
-mutations_filtered_unique$variantType <- as.factor(mutations_filtered_unique$variantType)
-
-levels(mutations_filtered_unique$variantType) ##PROBLEMA HI HA MOLTS PACIENTS AMB MUTACIONS de diferents tipus
-
-
-# Crear la matriz de mutaciones
-mutation_matrix <- mutations_filtered_unique %>%
-  distinct(patientId, hugoGeneSymbol) %>%
-  mutate(value = 1) %>%
-  pivot_wider(names_from = hugoGeneSymbol, values_from = value, values_fill = list(value = 0)) %>%
-  column_to_rownames("patientId")
-
-# Crear una tabla separada para los tipos de variantes
-variant_types <- mutations_filtered_unique %>%
-  pivot_wider(names_from = hugoGeneSymbol, values_from = variantType, values_fill = list(variantType = NA)) %>%
-  column_to_rownames("patientId")
-
-# Definir los colores para los tipos de variantes
-variant_types_unique <- na.omit(unique(unlist(variant_types)))
-variant_colors <- setNames(brewer.pal(length(variant_types_unique), "Set3"), variant_types_unique)
+# Definir una paleta de colores personalizada
+variant_colors <- c("WT" = "grey", "SNP" = "orange", "INS" = "cyan", "DEL" = "purple")
 
 # Crear el heatmap
-Heatmap(as.matrix(mutation_matrix),
-        name = "Variants",
-        col = colorRamp2(c(0, 1), c("white", "red")),
+Heatmap(mutation_matrix,
+        name = "Mutations",
+        col = variant_colors,
         show_row_names = TRUE,
         show_column_names = TRUE,
-        cluster_rows = TRUE,
-        cluster_columns = TRUE,
         column_title = "Genes",
         row_title = "Patients",
-        top_annotation = HeatmapAnnotation(
-          df = as.data.frame(t(variant_types)),  # Transponer para que los pacientes sean filas
-          col = list(variantType = variant_colors),
-          annotation_legend_param = list(
-            title = "Variant Types",
-            at = names(variant_colors),
-            labels = names(variant_colors)
-          )
-        )
-)
-
-#CREO QUE HAY UN PROBLEMA PORQUE HAY DEMASIADOS GENES INVOLUCRADOS --> LO QUE HAREMOS SERA SELECCIONAR LOS 30 CON LA MUTACIÓN MÁS FRECUENTE Y MOSTRARLO
+        cluster_rows = FALSE,    # Desactivar clustering de filas
+        cluster_columns = FALSE, # Desactivar clustering de columnas
+        show_heatmap_legend = TRUE, # Mostrar leyenda del heatmap
+        show_column_dend = FALSE,  # Desactivar dendrograma de columnas
+        show_row_dend = FALSE)     # Desactivar dendrograma de filas
