@@ -1,5 +1,5 @@
 # cbioportal-project-UB
-Repositorio para el trabajo final del curso de Ciencia de Datos de IL-3 Universidad de Barcelona.
+Repositorio para el trabajo final del grupo 1 del curso de Ciencia de Datos del Instituto de Formación Continua-IL3 Universidad de Barcelona.
 
 Pasos:
 1) Buscar un dataset en cBioportal con las características que nos interesan. https://www.cbioportal.org/study/clinicalData?id=brca_tcga_pan_can_atlas_2018
