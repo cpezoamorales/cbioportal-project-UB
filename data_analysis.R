@@ -3,7 +3,6 @@
 ###--------------------------------------------------------------------------###
 
 ### Intalación de librerias necesarias para el análisis:
-if(!require("cbioportalR")){install.packages("cbioportalR")}
 if(!require("tidyverse")){install.packages("tidyverse")}
 if(!require("gtsummary")){install.packages("gtsummary")}
 if(!require("survival")){install.packages("survival")}
@@ -23,7 +22,7 @@ clinical_brca_wide <- clinical_brca %>%
   pivot_wider(names_from = clinicalAttributeId, values_from = value)
 
 str(clinical_brca_wide)
-
+dim(clinical_brca_wide)
 length(unique(clinical_brca$patientId))
 
 
@@ -48,8 +47,10 @@ for (i in seq_len(nrow(attr_brca))) {
   }
 }
 
-###--------------------------------------------------------------------------###
-# Analisis descriptivo de las variables
+str(clinical_brca_wide)
+
+###-------------------------------------------------------------------------###
+# Análisis descriptivo de las variables
 ###--------------------------------------------------------------------------###
 # Crear resumen de tabla excluyendo las columnas uniquePatientKey, patientId y studyId
 tbl <- tbl_summary(
@@ -71,11 +72,13 @@ clinical_brca_wide$PFS_STATUS <- factor(clinical_brca_wide$PFS_STATUS,
                                         levels = c("0:CENSORED", "1:PROGRESSION"), 
                                         labels = c("0", "1"))
 
+###--------------------------------------------------------------------------###
+### Cálculo de sobrevida de las pacientes
+###--------------------------------------------------------------------------###
 # Verificar los nuevos niveles
 levels(clinical_brca_wide$PFS_STATUS)
 
-#ALTERNATIVA paquete  "ggsurvfit" --> mejor este se puede editar con ggplot2
-p <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wide) %>%
+p <- survival::survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wide) %>%
   ggsurvfit(linewidth = 1, color = "#607B8B") +  # Cambiar el color de la línea
   add_confidence_interval(fill = "#B0E2FF") +  # Cambiar el color del sombreado
   add_risktable() +  # Cambiar el estilo de la tabla de riesgo
@@ -85,7 +88,7 @@ p <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wide
     y = "Progression free survival",
     x= " Time (months)",
     title = "PFS"
-  )
+    )
 p
 
 ### PFS por subtipos
@@ -101,12 +104,15 @@ pfs_subtype <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = cli
 
 pfs_subtype
 
+###--------------------------------------------------------------------------###
+### Análisis de correlación entre variables numéricas
+###--------------------------------------------------------------------------###
 
-### Análisis exploratorios: Correlación de variables numéricas
+# Creación de una nueva tabla que contiene solo los datos numéricos:
 clinical_brca_numeric <- clinical_brca_wide %>% 
   select_if(is.numeric)
 
-# lower case:
+# Transformación de los nombres de las variables:
 names(clinical_brca_numeric) <- c(
   "age",
   "buffa_hypoxia_score",
@@ -123,7 +129,6 @@ names(clinical_brca_numeric) <- c(
 
 # Visualización general con un correlograma:
 pairs(clinical_brca_numeric)
-
 
 # Variable "days_pathologic_diag" gneera problema al calcular correlación. Eliminar:
 plot(clinical_brca_numeric$days_pathologic_diag)
@@ -169,6 +174,7 @@ hist(clinical_brca_numeric_3$winter_hypoxia_score, main="Winter hypoxia score")
 
 # Análisis de correlación entre todas las columnas
 clinical_corr <- cor(clinical_brca_numeric_3)
+par(mfrow=c(1,1))
 corrplot(clinical_corr, type = "upper")
 
 # Normalización de los datos
@@ -181,7 +187,7 @@ corrplot(cor_normalized, type = "upper")
 
 ### Segcionamineto de pacientes en vase a tabla de datos clínicos
 distM <- dist(normalized_matrix)
-clus <- hclust(distM)
+clus <- hclust(distM, method = "average")
 print(clus)
 plot(clus)
 
@@ -199,7 +205,7 @@ biplot(pca_result)
 # Revisar el otro método para hacer PCAs y sus plots
 
 # K-means
-kmeans_model <- kmeans(normalized_matrix, centers = 3)
+kmeans_model <- kmeans(normalized_matrix, centers = 4)
 summary(kmeans_model)
 fviz_cluster(kmeans_model, data = normalized_matrix, 
              geom = c("point", "text"), main = paste("Clusters de pacientes con k-means"))
