@@ -336,7 +336,7 @@ pfs_stage <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR
     title = "PFS by STAGE"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
-  coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
+  coord_cartesian(xlim = c(0, 200))  # Ajustar los límites del eje x
 
 pfs_stage
 
@@ -377,8 +377,9 @@ pfs_stage_group <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ group_stage, da
     x= " Time (months)",
     title = "PFS by GROUP STAGE"
   ) +
-  add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
-  coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
+  add_censor_mark(color = "gray50", shape = 124, size = 2)  +  # Añadir marcas de censura  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 200))  # Ajustar los límites del eje x
+
 
 pfs_stage_group
 
@@ -808,8 +809,6 @@ cox_os_age_tbl
 
 
 
-
-
 ####### VARIABLES NUMERICAS ###########
 
 ### Análisis exploratorios: Correlación de variables numéricas
@@ -1096,7 +1095,6 @@ heatmap_legend_param <- list(
 oncoPrint(mutation_matrix,
           alter_fun = alter_fun,
           col = col,
-          top_annotation =
           show_row_names = TRUE,
           show_column_names = FALSE,
           column_title = "Patients",
@@ -1105,9 +1103,9 @@ oncoPrint(mutation_matrix,
           show_column_dend = FALSE,
           show_row_dend = FALSE,
           remove_empty_columns = TRUE, remove_empty_rows = TRUE
-          )
+)
 
-##INTENTO DE PRUEBA CON DIVISON DE SUBTIPOS Y EDAD, FAIL
+### FAIL ### INTENTO DE PRUEBA CON DIVISON DE SUBTIPOS Y EDAD
 
 #Selecciono las variables de clinical info que me interesan y creo una base nueva
 patient_info <- clinical_brca_wide %>%
