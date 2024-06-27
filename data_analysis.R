@@ -139,6 +139,46 @@ tbl <- tbl_summary(
 
 tbl
 
+# Filtrando las variables numericas seleccionadas
+selected_vars_num <- c("AGE", "BUFFA_HYPOXIA_SCORE", "RAGNUM_HYPOXIA_SCORE", "WINTER_HYPOXIA_SCORE",
+  "TMB..nonsynonymous.", "Fraction.Genome.Altered", "Mutation.Count")
+
+tbl_selection_num <- tbl_summary(
+  clinical_brca_wide %>%
+    select(all_of(selected_vars_num)), 
+  type = list(where(is.factor) ~ "categorical"),
+  missing_text = "(Missing)",
+  sort = list(everything() ~ "alphanumeric"),
+  statistic = list(all_categorical() ~ "{n} ({p}%)", all_continuous() ~ "{median}, Range ({min} - {max})")
+) %>%
+  add_n() %>%
+  bold_labels() %>%
+  italicize_levels()
+
+tbl_selection_num
+
+
+# Filtrando las variables numericas seleccionadas
+selected_vars_cat <- c("SEX", "age_group", "ETHNICITY", "RACE", "SUBTYPE", "Cancer.Type.Detailed",
+  "AJCC_PATHOLOGIC_TUMOR_STAGE", "group_stage", "PRIMARY_LYMPH_NODE_PRESENTATION_ASSESSMENT",
+  "PATH_M_STAGE", "PRIOR_DX", "HISTORY_NEOADJUVANT_TRTYN",
+  "NEW_TUMOR_EVENT_AFTER_INITIAL_TREATMENT", "DFS_STATUS", "PFS_STATUS",
+  "DSS_STATUS", "OS_STATUS")
+
+tbl_selection_cat <- tbl_summary(
+  clinical_brca_wide %>%
+    select(all_of(selected_vars_cat)), 
+  type = list(where(is.factor) ~ "categorical"),
+  missing_text = "(Missing)",
+  sort = list(everything() ~ "alphanumeric"),
+  statistic = list(all_categorical() ~ "{n} ({p}%)", all_continuous() ~ "{median}, Range ({min} - {max})")
+) %>%
+  add_n() %>%
+  bold_labels() %>%
+  italicize_levels()
+
+tbl_selection_cat
+
 
 ## Analisis descriptivo en función de SUBTYPE
 
@@ -506,6 +546,7 @@ cox_pfs_oncotree_tbl
 ### PFS por Age group
 pfs_age <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ age_group, data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
@@ -582,7 +623,7 @@ os_subtype_120m <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = c
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
-    y = "Progression free survival",
+    y = "Overall survival",
     x= " Time (months)",
     title = "OS by subtype"
   ) +
@@ -601,7 +642,7 @@ os_subtype_36m <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = cl
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
-    y = "Progression free survival",
+    y = "Overall survival",
     x= " Time (months)",
     title = "OS by subtype"
   ) +
@@ -619,7 +660,7 @@ os_stage <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_ST
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
-    y = "Progression free survival",
+    y = "Overall survival",
     x= " Time (months)",
     title = "OS by STAGE"
   ) +
@@ -644,7 +685,7 @@ os_stage_120m <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUM
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
-    y = "Progression free survival",
+    y = "Overall survival",
     x= " Time (months)",
     title = "OS by STAGE"
   ) +
@@ -661,7 +702,7 @@ os_stage_group <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ group_stage, data 
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
-    y = "Progression free survival",
+    y = "Overall survival",
     x= " Time (months)",
     title = "OS by GROUP STAGE"
   ) +
@@ -685,7 +726,7 @@ os_stage_120m_group <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ group_stage, 
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
-    y = "Progression free survival",
+    y = "Overall survival",
     x= " Time (months)",
     title = "OS by GROUP STAGE"
   ) +
@@ -702,7 +743,7 @@ os_lympnodes <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_P
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
-    y = "Progression free survival",
+    y = "Overall survival",
     x= " Time (months)",
     title = "OS by LYMPH NODES"
   ) +
@@ -724,7 +765,7 @@ os_race <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ RACE, data = clinical_brc
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
-    y = "Progression free survival",
+    y = "Overall survival",
     x= " Time (months)",
     title = "OS by RACE"
   ) +
@@ -745,7 +786,7 @@ os_cancer_type <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ Cancer.Type.Detail
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
-    y = "Progression free survival",
+    y = "Overall survival",
     x= " Time (months)",
     title = "OS by Cancer Type"
   ) +
@@ -769,7 +810,7 @@ os_oncotree <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ Oncotree.Code, data =
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
-    y = "Progression free survival",
+    y = "Overall survival",
     x= " Time (months)",
     title = "OS by CANCER TYPE"
   ) +
@@ -789,10 +830,11 @@ cox_os_oncotree_tbl
 ### OS por Age group
 os_age <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ age_group, data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
   labs(
-    y = "Progression free survival",
+    y = "Overall survival",
     x= " Time (months)",
     title = "OS by AGE GROUP"
   ) +
@@ -806,6 +848,106 @@ cox_os_age <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ age_group, data = clinic
 cox_os_age_tbl <- tbl_regression(cox_os_age, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 
 cox_os_age_tbl
+
+#### DSS #####
+
+# Cambiar los niveles de la variable DSS_STATUS
+clinical_brca_wide$DSS_STATUS <- factor(clinical_brca_wide$DSS_STATUS, 
+                                        levels = c("0:ALIVE OR DEAD TUMOR FREE", "1:DEAD WITH TUMOR"), 
+                                        labels = c("0", "1"))
+
+# Verificar los nuevos niveles
+levels(clinical_brca_wide$DSS_STATUS)
+
+#ALTERNATIVA paquete  "ggsurvfit" --> mejor este se puede editar con ggplot2
+dss <- survfit2(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ 1, data = clinical_brca_wide) %>%
+  ggsurvfit(linewidth = 1, color = "#607B8B") +  # Cambiar el color de la línea
+  add_confidence_interval(fill = "#B0E2FF") +  # Cambiar el color del sombreado que representa el CI
+  add_risktable() +  # Cambiar el estilo de la tabla de riesgo
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Disease Specific survival",
+    x= " Time (months)",
+    title = "DSS"
+  ) +
+  add_censor_mark(color = "#607B8B", shape = 124, size = 2) 
+
+dss
+
+
+
+
+### DSS por subtipos
+dss_subtype <-survfit2(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Disease Specific survival",
+    x= " Time (months)",
+    title = "DSS by subtype"
+  ) +
+  add_censor_mark(color = "#607B8B", shape = 124, size = 2)  # Añadir marcas de censura
+
+dss_subtype
+
+#HR del modelo de cox
+cox_dss_subtype <- coxph(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_dss_subtype_tbl <- tbl_regression(cox_dss_subtype, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_dss_subtype_tbl
+
+
+### DSS por Group stage stage
+dss_stage_group <-survfit2(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Disease Specific survival",
+    x= " Time (months)",
+    title = "DSS by GROUP STAGE"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2)  +  # Añadir marcas de censura  # Añadir marcas de censura
+  coord_cartesian(xlim = c(0, 200))  # Ajustar los límites del eje x
+
+
+dss_stage_group
+
+#HR del modelo de cox
+cox_dss_stage_group <- coxph(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_dss_stage_group_tbl <- tbl_regression(cox_dss_stage_group, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_dss_stage_group_tbl
+
+### DSS por Age group
+dss_age <-survfit2(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ age_group, data = clinical_brca_wide) %>% 
+  ggsurvfit(linewidth = 1)  + 
+  add_risktable() + 
+  add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
+  scale_ggsurvfit() +
+  labs(
+    y = "Disease Specific survival",
+    x= " Time (months)",
+    title = "DSS by AGE GROUP"
+  ) +
+  add_censor_mark(color = "gray50", shape = 124, size = 2)
+
+dss_age
+
+#HR del modelo de cox
+cox_dss_age <- coxph(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ age_group, data = clinical_brca_wide) # Ajustar el modelo de Cox
+
+cox_dss_age_tbl <- tbl_regression(cox_dss_age, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+
+cox_dss_age_tbl
+
+
 
 
 
@@ -863,7 +1005,7 @@ dim(clinical_brca_numeric_2)
 dim(clinical_brca_numeric_3)
 
 # Gráficos de distribuciones sin valores NAs:
-par(mfrow=c(2,5))
+par(mfrow=c(2,5)) #para determinar estructura gráficos 
 hist(clinical_brca_numeric_3$age, main="Age")
 hist(clinical_brca_numeric_3$buffa_hypoxia_score, main="Buffa hypoxia score")
 hist(clinical_brca_numeric_3$days_last_followup, main="Days last followup")
@@ -1004,6 +1146,7 @@ table_cna
 
 ############### HEATMAP ####################
 
+#Prueba Heatmap 1
 # Crear data con solo filas que nos interesan
 mutations_filtered <- mutations %>%
   select(hugoGeneSymbol, patientId, variantType)
@@ -1170,6 +1313,121 @@ oncoPrint(
     at = c("SNP", "INS", "DEL"),
     labels = c("SNP", "Insertion", "Deletion")
   ),
+  show_column_dend = FALSE,
+  show_row_dend = FALSE,
+  remove_empty_columns = TRUE,
+  remove_empty_rows = TRUE
+)
+
+
+#HEATMAP AHORA POR MUTATION TYPE
+
+#Prueba Heatmap 1
+# Crear data con solo filas que nos interesan
+mutations_filtered_2 <- mutations %>%
+  select(hugoGeneSymbol, patientId, mutationType)
+
+# Calcular la prevalencia de mutaciones para cada gen y tipo de variante
+gene_variant_prevalence_2 <- mutations_filtered_2 %>%
+  group_by(hugoGeneSymbol, mutationType) %>%
+  summarise(prevalence = n(), .groups = 'drop') %>%
+  arrange(desc(prevalence))
+
+# Seleccionar las 50 mutaciones más prevalentes
+top_mutations_2 <- gene_variant_prevalence_2 %>%
+  slice_head(n = 50) %>%
+  select(hugoGeneSymbol, mutationType)
+
+
+# Filtrar el data frame original para incluir solo las mutaciones seleccionadas
+mutations_filtered_2_top <- mutations_filtered_2 %>%
+  semi_join(top_mutations_2, by = c("hugoGeneSymbol", "mutationType"))
+
+#Pivotar la tabla de larga a ancha
+mutations_wide_2 <- mutations_filtered_2_top %>%
+  group_by(hugoGeneSymbol, patientId) %>%
+  summarise(mutationType = paste(unique(mutationType), collapse = ";"), .groups = 'drop') %>%
+  pivot_wider(names_from = patientId, values_from = mutationType, values_fill = list(mutationType = "WT"))
+
+# Ver el resultado
+print(mutations_wide_2)
+
+# Crear una versión modificada de la tabla para el heatmap
+mutations_wide_2_modified <- mutations_wide_2 %>%
+  pivot_longer(-hugoGeneSymbol, names_to = "patientId", values_to = "mutationType") %>%
+  mutate(mutationType = factor(mutationType, levels = c("Frame_Shift_Del","Frame_Shift_Ins","In_Frame_Del","In_Frame_Ins","Missense_Mutation","Nonsense_Mutation","Nonstop_Mutation","Splice_Region","Splice_Site","Translation_Start_Site"
+  ))) %>%
+  pivot_wider(names_from = patientId, values_from = mutationType)
+
+# Convertir a matriz
+mutation_matrix_2 <- as.matrix(mutations_wide_2_modified %>% select(-hugoGeneSymbol))
+mutation_matrix_2 <- mutation_matrix_2[, order(colnames(mutation_matrix_2))]
+
+# Asignar los nombres de las filas
+rownames(mutation_matrix_2) <- mutations_wide_2_modified$hugoGeneSymbol
+
+# Definir una paleta de colores personalizada
+variant_colors_2 <- c("Frame_Shift_Del" = "#FFA07A", "Frame_Shift_Ins" = "#79a2ab", "In_Frame_Del" = "#E49183", "In_Frame_Ins" = "#E8A49A", "Missense_Mutation" = "#b3577f", "Nonsense_Mutation" = "#CDB79E", "Splice_Region" = "#D35C79", "Splice_Site" = "#CE9F51", "Translation_Start_Site" = "#46307E" )
+
+
+
+# Crear el heatmap
+Heatmap(mutation_matrix_2,
+        name = "Mutations",
+        col = variant_colors_2,
+        show_row_names = TRUE,
+        show_column_names = FALSE,
+        column_title = "Patients",
+        row_title = "Genes",
+        cluster_rows = FALSE,    
+        cluster_columns = FALSE, 
+        show_heatmap_legend = TRUE, 
+        show_column_dend = FALSE,  
+        show_row_dend = FALSE,
+)
+
+###### Heatmap con la función específica de ONCOPRINT de cBioportal para resaltar también los porcentajes y ver el total de mutaciones y los tipos #########
+
+# Definir la paleta de colores personalizada, excluyendo WT
+col_2 <- c("Frame_Shift_Del" = "#FFA07A", "Frame_Shift_Ins" = "#79a2ab", "In_Frame_Del" = "#E49183", "In_Frame_Ins" = "#E8A49A", "Missense_Mutation" = "#b3577f", "Nonsense_Mutation" = "#CDB79E", "Splice_Region" = "#D35C79", "Splice_Site" = "#CE9F51", "Translation_Start_Site" = "#46307E" )
+
+# Convertir valores WT a NA para que no los contabilice como mutaciones y se puedan calcular los % correctamente
+mutation_matrix_2[mutation_matrix_2 == "WT"] <- NA
+
+# Convertir valores NA a cadenas vacías
+mutation_matrix_2[is.na(mutation_matrix_2)] <- ""
+
+# Crear una lista de funciones para las variantes
+alter_fun_2 <- list(
+  background = alter_graphic("rect", fill = "#FFF5EE"),  # Fondo para WT
+  Frame_Shift_Del = alter_graphic("rect", fill = col_2["Frame_Shift_Del"]),
+  Frame_Shift_Ins = alter_graphic("rect", fill = col_2["Frame_Shift_Ins"]),
+  In_Frame_Del = alter_graphic("rect", fill = col_2["In_Frame_Del"]),
+  In_Frame_Ins = alter_graphic("rect", fill = col_2["In_Frame_Ins"]),
+  Missense_Mutation = alter_graphic("rect", fill = col_2["Missense_Mutation"]),
+  Nonsense_Mutation = alter_graphic("rect", fill = col_2["Nonsense_Mutation"]),
+  Splice_Region = alter_graphic("rect", fill = col_2["Splice_Region"]),
+  Splice_Site = alter_graphic("rect", fill = col_2["Splice_Site"]),
+  Translation_Start_Site = alter_graphic("rect", fill = col_2["Translation_Start_Site"])
+)
+
+# Definir los parámetros de la leyenda del heatmap
+heatmap_legend_param <- list(
+  title = "Mutations",
+  at = names(col_2),
+  labels = c("Frame_Shift_Del", "Frame_Shift_Ins", "In_Frame_Del", "In_Frame_Ins", "Missense_Mutation", "Nonsense_Mutation", "Splice_Region", "Splice_Site", "Translation_Start_Site")
+)
+
+# Crear el oncoPrint con genes en el eje Y y pacientes en el eje X
+oncoPrint(
+  mutation_matrix_2,
+  alter_fun = alter_fun_2,
+  col = col_2,
+  show_row_names = TRUE,
+  show_column_names = FALSE,
+  column_title = "Patients",
+  row_title = "Genes",
+  heatmap_legend_param = heatmap_legend_param,
   show_column_dend = FALSE,
   show_row_dend = FALSE,
   remove_empty_columns = TRUE,
