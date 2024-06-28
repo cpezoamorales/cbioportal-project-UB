@@ -25,20 +25,9 @@ library(ComplexHeatmap)
 
 
 
-# Carga de datos crusdos almacenados previamente en archivo RData
-load("data.RData")
+# Carga de datos crusdos almacenados previamente en archivo RData para que no tarde tanto en cargar los datos
+load("data2.RData")
 
-data_oncotree <- read.csv2("Oncotree_Code.full.csv")
-data_oncotree <- data_oncotree %>% rename(patientId = Patient.ID)
-
-data_tmb <- read.csv2("TMB_(nonsynonymous).csv")
-data_tmb <- data_tmb %>% rename(patientId = Patient.ID)
-
-data_fraction_gen_al <- read.csv2("Mutation_Count_vs_Fraction_Genome_Altered.csv")
-data_fraction_gen_al <- data_fraction_gen_al %>% rename(patientId = Patient.ID)
-
-data_cancer_type <- read.csv2("Cancer_Type_Detailed.csv")
-data_cancer_type <- data_cancer_type %>% rename(patientId = Patient.ID)
 
 # Seleccionar solo las columnas necesarias de cada dataset para hacer el merge
 data_oncotree <- data_oncotree %>% select(patientId, Oncotree.Code)
@@ -96,10 +85,10 @@ clinical_brca_wide$Fraction.Genome.Altered <- as.numeric (clinical_brca_wide$Fra
 
 clinical_brca_wide <- clinical_brca_wide %>% 
   mutate(group_stage = case_when(
-    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE I" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IA" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IB")  ~ "Stage I ",
-    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE II" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIA" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIB")  ~ "Stage II ",
-    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE III" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIIA" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIIB" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIIC")  ~ "Stage III ",
-    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IV") ~ "Stage IV ",
+    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE I" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IA" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IB")  ~ "Stage I",
+    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE II" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIA" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIB")  ~ "Stage II",
+    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE III" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIIA" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIIB" | AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IIIC")  ~ "Stage III",
+    (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE IV") ~ "Stage IV",
     (AJCC_PATHOLOGIC_TUMOR_STAGE == "STAGE X") ~ "Stage X",
   ))
 
@@ -110,14 +99,14 @@ print(as_tibble(clinical_brca_wide) %>%
 #Grupos de age
 clinical_brca_wide <- clinical_brca_wide %>%
   mutate(age_group = case_when(
-    AGE < 40 ~ "<40",
-    AGE >= 40 & AGE <= 60 ~ "40-60",
-    AGE > 60 ~ ">60"
+    AGE < 40 ~ "<40 years old",
+    AGE >= 40 & AGE <= 60 ~ "40-60 years old",
+    AGE > 60 ~ ">60 years old"
   ))
 
 # Ordenar los grupos
 clinical_brca_wide$age_group <- factor(clinical_brca_wide$age_group,
-                                       levels = c("<40", "40-60", ">60"))
+                                       levels = c("<40 years old", "40-60 years old", ">60 years old"))
 
 
 
@@ -135,7 +124,16 @@ tbl <- tbl_summary(
 ) %>%
   add_n() %>%
   bold_labels() %>%
-  italicize_levels()
+  italicize_levels() %>%
+  as_gt() %>%
+  tab_header(
+    title = md("<span style='font-size:24px; color:#EE6363'>Análisis exploratorio de variables</span>")
+  ) %>%
+  tab_options(
+    heading.title.font.size = px(24), 
+    heading.title.font.weight = "bold"
+  )
+
 
 tbl
 
@@ -153,12 +151,21 @@ tbl_selection_num <- tbl_summary(
 ) %>%
   add_n() %>%
   bold_labels() %>%
-  italicize_levels()
+  italicize_levels() %>%
+  modify_header(label = "**Numeric characteristics**") %>%
+  as_gt() %>%
+  tab_header(
+    title = md("<span style='font-size:24px; color:#7AC5CD'>Análisis exploratorio de variables numéricas</span>")
+  ) %>%
+  tab_options(
+    heading.title.font.size = px(24), 
+    heading.title.font.weight = "bold"
+  )
 
 tbl_selection_num
 
 
-# Filtrando las variables numericas seleccionadas
+# Filtrando las variables categóricas seleccionadas
 selected_vars_cat <- c("SEX", "age_group", "ETHNICITY", "RACE", "SUBTYPE", "Cancer.Type.Detailed",
   "AJCC_PATHOLOGIC_TUMOR_STAGE", "group_stage", "PRIMARY_LYMPH_NODE_PRESENTATION_ASSESSMENT",
   "PATH_M_STAGE", "PRIOR_DX", "HISTORY_NEOADJUVANT_TRTYN",
@@ -175,7 +182,16 @@ tbl_selection_cat <- tbl_summary(
 ) %>%
   add_n() %>%
   bold_labels() %>%
-  italicize_levels()
+  italicize_levels()  %>%
+  modify_header(label = "**Categorical characteristics**") %>%
+  as_gt() %>%
+  tab_header(
+    title = md("<span style='font-size:24px; color:#FF7F00'>Análisis exploratorio de variables categóricas</span>")
+  ) %>%
+  tab_options(
+    heading.title.font.size = px(24), 
+    heading.title.font.weight = "bold"
+  )
 
 tbl_selection_cat
 
@@ -184,7 +200,7 @@ tbl_selection_cat
 
 tbl_subtype <- tbl_summary(
   clinical_brca_wide %>%
-    select(-c(patientId, FORM_COMPLETION_DATE, ICD_10, OTHER_PATIENT_ID )), 
+    select(all_of(c(selected_vars_num, selected_vars_cat))), 
   by = SUBTYPE, 
   type = list(where(is.factor) ~ "categorical"),
   missing_text = "(Missing)",
@@ -194,7 +210,15 @@ tbl_subtype <- tbl_summary(
   add_n() %>%
   bold_labels() %>%
   italicize_levels() %>%
-  add_p()
+  add_p()  %>%
+  as_gt() %>%
+  tab_header(
+    title = md("<span style='font-size:24px; color:#A2CD5A'>Descriptiva por Subtipo</span>")
+  ) %>%
+  tab_options(
+    heading.title.font.size = px(24), 
+    heading.title.font.weight = "bold"
+  )
 
 tbl_subtype
 
@@ -203,7 +227,7 @@ tbl_subtype
 
 tbl_groupstage <- tbl_summary(
   clinical_brca_wide %>%
-    select(-c(patientId, FORM_COMPLETION_DATE, ICD_10, OTHER_PATIENT_ID )), 
+    select(all_of(c(selected_vars_num, selected_vars_cat))), 
   by = group_stage, 
   type = list(where(is.factor) ~ "categorical"),
   missing_text = "(Missing)",
@@ -213,14 +237,22 @@ tbl_groupstage <- tbl_summary(
   add_n() %>%
   bold_labels() %>%
   italicize_levels() %>%
-  add_p()
+  add_p()  %>%
+  as_gt() %>%
+  tab_header(
+    title = md("<span style='font-size:24px; color:#A2CD5A'>Descriptiva por Grupo de Estadío</span>")
+  ) %>%
+  tab_options(
+    heading.title.font.size = px(24), 
+    heading.title.font.weight = "bold"
+  )
 
 tbl_groupstage
 
 ## Analisis descriptivo en función de AGE GROUP
 tbl_agegroup <- tbl_summary(
   clinical_brca_wide %>%
-    select(-c(patientId, FORM_COMPLETION_DATE, ICD_10, OTHER_PATIENT_ID )), 
+    select(all_of(c(selected_vars_num, selected_vars_cat))), 
   by = age_group, 
   type = list(where(is.factor) ~ "categorical"),
   missing_text = "(Missing)",
@@ -230,7 +262,15 @@ tbl_agegroup <- tbl_summary(
   add_n() %>%
   bold_labels() %>%
   italicize_levels() %>%
-  add_p()
+  add_p()  %>%
+  as_gt() %>%
+  tab_header(
+    title = md("<span style='font-size:24px; color:#A2CD5A'>Descriptiva por Grupo de Edad</span>")
+  ) %>%
+  tab_options(
+    heading.title.font.size = px(24), 
+    heading.title.font.weight = "bold"
+  )
 
 tbl_agegroup
 
@@ -242,7 +282,7 @@ clinical_brca_wide_filter_cancertype <- clinical_brca_wide %>%
 
 tbl_cancertype <- tbl_summary(
   clinical_brca_wide_filter_cancertype %>%
-    select(-c(patientId, FORM_COMPLETION_DATE, ICD_10, OTHER_PATIENT_ID)), 
+    select(all_of(c(selected_vars_num, selected_vars_cat))), 
   by = Cancer.Type.Detailed, 
   type = list(where(is.factor) ~ "categorical"),
   missing_text = "(Missing)",
@@ -252,7 +292,16 @@ tbl_cancertype <- tbl_summary(
   add_n() %>%
   bold_labels() %>%
   italicize_levels() %>%
-  add_p()
+  add_p()  %>%
+  as_gt() %>%
+  tab_header(
+    title = md("<span style='font-size:24px; color:#A2CD5A'>Descriptiva por Tipo Histológico</span>")
+  ) %>%
+  tab_options(
+    heading.title.font.size = px(24), 
+    heading.title.font.weight = "bold"
+  )
+
 
 tbl_cancertype
 
@@ -1080,15 +1129,47 @@ summary_data <- mutations %>%
     percent_samples_with_mutation = (unique_samples / total_samples) * 100  # Porcentaje de muestras con al menos una mutación en este gen
   ) %>%
   arrange(desc(percent_samples_with_mutation)) %>%
-  mutate(percent_samples_with_mutation = round(percent_samples_with_mutation, 2))
+  mutate(percent_samples_with_mutation = round(percent_samples_with_mutation, 2))%>%
+  slice_head(n = 100)  # Seleccionar los top 100
 
 table_mutations <- summary_data %>%
   gt() %>%
-  cols_hide(columns = "total_samples")
+  cols_hide(columns = "total_samples") %>%
+  tab_header(
+    title = md("<span style='font-size:20px; color:#EE6363'>Resumen de Mutaciones por Gen - Top 100 </span>")
+  ) %>%
+  cols_label(
+    hugoGeneSymbol = "Gen",
+    total_mutations = "Total de Mutaciones",
+    unique_samples = "Total de Mutaciones por muestra única",
+    percent_samples_with_mutation = "Porcentaje de Muestras con Mutación en este gen"
+  )%>%
+  fmt_number(
+    columns = vars(percent_samples_with_mutation),
+    decimals = 2,
+    suffixing = TRUE
+  ) %>%
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  ) %>%
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(columns = vars(hugoGeneSymbol))
+  ) %>%
+  fmt(
+    columns = vars(percent_samples_with_mutation),
+    fns = function(x) gsub("\\.", ",", paste0(x, "%"))
+  )
+
 
 table_mutations
 
-# STRUCTURAL VAARIANTS analysis
+# STRUCTURAL VARIANTS analysis
 summary_data_structural <- structural_variant %>%
   group_by(site1HugoSymbol) %>%
   summarise(
@@ -1100,12 +1181,45 @@ summary_data_structural <- structural_variant %>%
     percent_samples_with_sv = (unique_samples / total_samples) * 100  # Porcentaje de muestras con al menos una SV  en este gen
   ) %>%
   arrange(desc(percent_samples_with_sv)) %>%
-  mutate(percent_samples_with_sv = round(percent_samples_with_sv, 2))
+  mutate(percent_samples_with_sv = round(percent_samples_with_sv, 2)) %>%
+  slice_head(n = 100)  # Seleccionar los top 100
 
 
 table_sv <- summary_data_structural %>%
   gt() %>%
-  cols_hide(columns = "total_samples")
+  cols_hide(columns = "total_samples")  %>%
+  tab_header(
+    title = md("<span style='font-size:20px; color:#EE6363'>Resumen de Variantes Estructurales por Gen - Top 100</span>")
+  ) %>%
+  cols_label(
+    site1HugoSymbol	 = "Gen",
+    total_mutations = "Total de Variantes estructurales",
+    unique_samples = "Total de Variantes estructurales por muestra única",
+    percent_samples_with_sv = "Porcentaje de Muestras con Variantes estructurales en este gen"
+  )%>%
+  fmt_number(
+    columns = vars(percent_samples_with_sv),
+    decimals = 2,
+    suffixing = TRUE
+  ) %>%
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  ) %>%
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(columns = vars(
+      site1HugoSymbol))
+  ) %>%
+  fmt(
+    columns = vars(percent_samples_with_sv),
+    fns = function(x) gsub("\\.", ",", paste0(x, "%"))
+  )
+
 
 table_sv
 
@@ -1118,11 +1232,12 @@ levels(cna$alteration)
 cna <- cna %>% 
   mutate(alteration_type = case_when(
     alteration == -2 ~ "HOMDEL",
-    alteration == 2 ~ "AMP"
+    alteration == 2 ~ "AMP",
+    TRUE ~ NA_character_  # Agregar TRUE ~ NA_character_ para manejar otros valores posibles de alteration
   ))
 
 
-summary_data_cna <- cna %>% #HAY UN PROBLEMA QUE LO HACE PERO TARDA MUCHO EN CALCULARLO porque hay >446.000 lineas
+summary_data_cna <- cna %>% 
   group_by(hugoGeneSymbol, alteration_type) %>%
   summarise(
     total_mutations = n(),  # Número total de CNA en este gen
@@ -1134,19 +1249,53 @@ summary_data_cna <- cna %>% #HAY UN PROBLEMA QUE LO HACE PERO TARDA MUCHO EN CAL
     percent_samples_with_cna = (unique_samples / total_samples) * 100  # Porcentaje de muestras con al menos una CNA  en este gen
   ) %>%
   arrange(desc(percent_samples_with_cna)) %>%
-  mutate(percent_samples_with_cna = round(percent_samples_with_cna, 2))
+  mutate(percent_samples_with_cna = round(percent_samples_with_cna, 2)) %>%
+  ungroup() %>%  # Desagrupar antes de seleccionar los top 100
+  slice_head(n = 100)  # Seleccionar los top 100
 
 
 table_cna <- summary_data_cna %>%
   gt() %>%
-  cols_hide(columns =  c("total_samples", "total_mutations"))
+  cols_hide(columns =  c("total_samples", "total_mutations")) %>%
+  tab_header(
+    title = md("<span style='font-size:20px; color:#EE6363'>Resumen de Alteraciones de número de copia (CNA) - Top 100</span>")
+  ) %>%
+  cols_label(
+    hugoGeneSymbol	 = "Gen",
+    total_mutations = "Total de Alteraciones de número de copia (CNA)",
+    unique_samples = "Total de Alteraciones de número de copia (CNA) por muestra única",
+    percent_samples_with_cna = "Porcentaje de Muestras con Alteraciones de número de copia (CNA) en este gen"
+  )%>%
+  fmt_number(
+    columns = vars(percent_samples_with_cna),
+    decimals = 2,
+    suffixing = TRUE
+  ) %>%
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  ) %>%
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_body(columns = vars(
+      hugoGeneSymbol))
+  ) %>%
+  fmt(
+    columns = vars(percent_samples_with_cna),
+    fns = function(x) gsub("\\.", ",", paste0(x, "%"))
+  )
+
 
 table_cna
 
 
 ############### HEATMAP ####################
 
-#Prueba Heatmap 1
+#Prueba Heatmap tipo 1 
 # Crear data con solo filas que nos interesan
 mutations_filtered <- mutations %>%
   select(hugoGeneSymbol, patientId, variantType)
@@ -1248,81 +1397,11 @@ oncoPrint(mutation_matrix,
           remove_empty_columns = TRUE, remove_empty_rows = TRUE
 )
 
-### FAIL ### INTENTO DE PRUEBA CON DIVISON DE SUBTIPOS Y EDAD
-
-#Selecciono las variables de clinical info que me interesan y creo una base nueva
-patient_info <- clinical_brca_wide %>%
-  select(patientId, SUBTYPE, age_group)
-
-patient_info$SUBTYPE<- as.factor(patient_info$SUBTYPE)
-patient_info$age_group<- as.factor(patient_info$age_group)
-
-# Definir colores para SUBTYPE y age_group
-subtype_colors <- c("BRCA_Basal" = "#ff9634", "BRCA_Her2" = "#f99e61", "BRCA_LumA" = "#efa689", "BRCA_LumB" = "#e2aeb0", "BRCA_Normal" = "#cfb6d7")
-age_group_colors <- c("<40" = "#FFF68F", ">60" = "#CDC673", "40-60" = "#8B864E")
 
 
-# Función para generar barras de anotación basadas en SUBTYPE
-anno_subtype <- function(patient_info) {
-  HeatmapAnnotation(
-    foo = anno_barplot(factor(patient_info$SUBTYPE), col = subtype_colors),
-    width = unit(1, "cm")
-  )
-}
+#HEATMAP POR MUTATION TYPE
 
-# Función para generar barras de anotación basadas en age_group
-anno_age_group <- function(patient_info) {
-  HeatmapAnnotation(
-    foo = anno_barplot(factor(patient_info$age_group), col = age_group_colors),
-    width = unit(1, "cm")
-  )
-}
-
-
-# Definir la paleta de colores personalizada, excluyendo WT
-col <- c("SNP" = "#A2CD5A", "INS" = "#EE6363", "DEL" = "#6CA6CD")
-
-# Convertir valores WT a NA para que no los contabilize como mutaciones y se puedan calcular los % correctamente
-mutation_matrix[mutation_matrix == "WT"] <- NA
-
-# Crear la lista de funciones para las variantes (alter_fun)
-alter_fun <- list(
-  background = alter_graphic("rect", fill = "#FFF5EE"),  # Fondo para WT
-  SNP = alter_graphic("rect", fill = col["SNP"]),
-  INS = alter_graphic("rect", fill = col["INS"]),
-  DEL = alter_graphic("rect", fill = col["DEL"])
-)
-
-
-
-# Crear el oncoPrint con genes en el eje Y y pacientes en el eje X
-oncoPrint(
-  mutation_matrix,
-  top_annotation = rowAnnotation(
-    SUBTYPE = anno_subtype(patient_info),
-    age_group = anno_age_group(patient_info)
-  ),
-  alter_fun = alter_fun,
-  col = col, 
-  show_row_names = TRUE,
-  show_column_names = FALSE,
-  column_title = "Patients",
-  row_title = "Genes",
-  heatmap_legend_param = list(
-    title = "Mutations",
-    at = c("SNP", "INS", "DEL"),
-    labels = c("SNP", "Insertion", "Deletion")
-  ),
-  show_column_dend = FALSE,
-  show_row_dend = FALSE,
-  remove_empty_columns = TRUE,
-  remove_empty_rows = TRUE
-)
-
-
-#HEATMAP AHORA POR MUTATION TYPE
-
-#Prueba Heatmap 1
+#Prueba Heatmap tipo 1
 # Crear data con solo filas que nos interesan
 mutations_filtered_2 <- mutations %>%
   select(hugoGeneSymbol, patientId, mutationType)
@@ -1428,6 +1507,77 @@ oncoPrint(
   column_title = "Patients",
   row_title = "Genes",
   heatmap_legend_param = heatmap_legend_param,
+  show_column_dend = FALSE,
+  show_row_dend = FALSE,
+  remove_empty_columns = TRUE,
+  remove_empty_rows = TRUE
+)
+
+### FAIL ### INTENTO DE PRUEBA CON DIVISON DE SUBTIPOS Y EDAD
+
+#Selecciono las variables de clinical info que me interesan y creo una base nueva
+patient_info <- clinical_brca_wide %>%
+  select(patientId, SUBTYPE, age_group)
+
+patient_info$SUBTYPE<- as.factor(patient_info$SUBTYPE)
+patient_info$age_group<- as.factor(patient_info$age_group)
+
+# Definir colores para SUBTYPE y age_group
+subtype_colors <- c("BRCA_Basal" = "#ff9634", "BRCA_Her2" = "#f99e61", "BRCA_LumA" = "#efa689", "BRCA_LumB" = "#e2aeb0", "BRCA_Normal" = "#cfb6d7")
+age_group_colors <- c("<40 years old" = "#FFF68F", "40-60 years old" = "#CDC673", ">60 years old" = "#8B864E")
+
+
+# Función para generar barras de anotación basadas en SUBTYPE
+anno_subtype <- function(patient_info) {
+  HeatmapAnnotation(
+    foo = anno_barplot(factor(patient_info$SUBTYPE), col = subtype_colors),
+    width = unit(1, "cm")
+  )
+}
+
+# Función para generar barras de anotación basadas en age_group
+anno_age_group <- function(patient_info) {
+  HeatmapAnnotation(
+    foo = anno_barplot(factor(patient_info$age_group), col = age_group_colors),
+    width = unit(1, "cm")
+  )
+}
+
+
+# Definir la paleta de colores personalizada, excluyendo WT
+col <- c("SNP" = "#A2CD5A", "INS" = "#EE6363", "DEL" = "#6CA6CD")
+
+# Convertir valores WT a NA para que no los contabilize como mutaciones y se puedan calcular los % correctamente
+mutation_matrix[mutation_matrix == "WT"] <- NA
+
+# Crear la lista de funciones para las variantes (alter_fun)
+alter_fun <- list(
+  background = alter_graphic("rect", fill = "#FFF5EE"),  # Fondo para WT
+  SNP = alter_graphic("rect", fill = col["SNP"]),
+  INS = alter_graphic("rect", fill = col["INS"]),
+  DEL = alter_graphic("rect", fill = col["DEL"])
+)
+
+
+
+# Crear el oncoPrint con genes en el eje Y y pacientes en el eje X
+oncoPrint(
+  mutation_matrix,
+  top_annotation = rowAnnotation(
+    SUBTYPE = anno_subtype(patient_info),
+    age_group = anno_age_group(patient_info)
+  ),
+  alter_fun = alter_fun,
+  col = col, 
+  show_row_names = TRUE,
+  show_column_names = FALSE,
+  column_title = "Patients",
+  row_title = "Genes",
+  heatmap_legend_param = list(
+    title = "Mutations",
+    at = c("SNP", "INS", "DEL"),
+    labels = c("SNP", "Insertion", "Deletion")
+  ),
   show_column_dend = FALSE,
   show_row_dend = FALSE,
   remove_empty_columns = TRUE,
