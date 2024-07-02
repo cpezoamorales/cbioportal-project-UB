@@ -33,7 +33,7 @@ if(!require("fastDummies")){install.packages("fastDummies")}
 if(!require("ComplexHeatmap")){install.packages("ComplexHeatmap")}
 
 ### Carga de datos crusdos almacenados previamente en archivo RData:
-load("2_data.RData") # NO OLVIDAR ASIGNAR EL ÚLTIMO ARCHIVO
+load("cbioportal_data.RData") # NO OLVIDAR ASIGNAR EL ÚLTIMO ARCHIVO
 
 # Almacenar la dirección de trabajo para uso posterior 
 work_path <- getwd()
@@ -61,6 +61,8 @@ tbl_1 <- tbl_summary(
     heading.title.font.size = px(24), 
     heading.title.font.weight = "bold"
   )
+tbl_1
+# Descargar tabla en formato docx:
 gt::gtsave(data = tbl_1, filename = "tabla_1.docx", path = work_path)
 
 # Filtrando las variables numéricas seleccionadas
@@ -94,9 +96,11 @@ tbl_selection_num <- tbl_summary(
     heading.title.font.size = px(24), 
     heading.title.font.weight = "bold"
   )
+tbl_selection_num
+# Descargar tabla en formato docx:
 gt::gtsave(data = tbl_selection_num, filename = "tabla_numericos.docx", path = work_path)
 
-# Filtrando las variables categóricas seleccionadas
+# Selección de las variables categóricas de interés:
 selected_vars_cat <- c(
   "SEX",
   "age_group",
@@ -163,9 +167,10 @@ tbl_subtype <- tbl_summary(
     heading.title.font.weight = "bold"
   )
 tbl_subtype
+# Descargar tabla en formato docx:
 gt::gtsave(data = tbl_subtype, filename = "tabla_subtype.docx", path = work_path)
 
-## Analisis descriptivo en función de GROUP STAGE
+## Análisis descriptivo en función de GROUP STAGE:
 tbl_groupstage <- tbl_summary(
   clinical_brca_wide %>%
     select(all_of(c(selected_vars_num, selected_vars_cat))), 
@@ -187,8 +192,8 @@ tbl_groupstage <- tbl_summary(
     heading.title.font.size = px(24), 
     heading.title.font.weight = "bold"
   )
-
 tbl_groupstage
+# Descargar tabla en formato docx:
 gt::gtsave(data = tbl_groupstage, filename = "tabla_subgrupo.docx", path = work_path)
 
 ## Análisis descriptivo en función de AGE GROUP
@@ -213,11 +218,12 @@ tbl_agegroup <- tbl_summary(
     heading.title.font.size = px(24), 
     heading.title.font.weight = "bold"
   )
-
 tbl_agegroup
+# Descargar tabla en formato docx:
 gt::gtsave(data = tbl_agegroup, filename = "tabla_agegroup.docx", path = work_path)
 
-## Analisis descriptivo en función de CancerType (pero solo los 2 grupos principales: Ductal y Lobular)
+## Análisis descriptivo en función de CancerType (pero solo los 2 grupos principales: 
+# 1) Ductal y 2)Lobular.
 clinical_brca_wide_filter_cancertype <- clinical_brca_wide %>%
   filter(Cancer.Type.Detailed %in% c("Breast Invasive Ductal Carcinoma", "Breast Invasive Lobular Carcinoma")) #se crea subpoblacion con los 2 tipos de cancer más frecuentes para compararlos
 
@@ -242,8 +248,8 @@ tbl_cancertype <- tbl_summary(
     heading.title.font.size = px(24), 
     heading.title.font.weight = "bold"
   )
-
 tbl_cancertype
+# Descargar tabla en formato docx:
 gt::gtsave(data = tbl_cancertype, filename = "tabla_cancertype.docx", path = work_path)
 
 ###--------------------------------------------------------------------------###
@@ -272,7 +278,6 @@ pfs <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wi
   add_censor_mark(color = "#607B8B", shape = 124, size = 2) 
 
 pfs
-
 
 # Zoom de los 10 primeros años (hasta 120 meses)
 pfs_120m <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wide) %>%
@@ -306,12 +311,11 @@ pfs_subtype <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = cli
 
 pfs_subtype
 
-#HR del modelo de cox
+# Cálculo del Hazard Ratio del modelo de cox:
 cox_pfs_subtype <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_pfs_subtype_tbl <- tbl_regression(cox_pfs_subtype, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_pfs_subtype_tbl
 #gt::gtsave(data = cox_pfs_subtype_tbl, filename = "cox_pfs_subtype_tbl.docx", path = work_path)
-
 
 ### PFS por subtipos  Zoom de los 10 primeros años (hasta 120 meses)
 pfs_subtype_120m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
@@ -326,10 +330,7 @@ pfs_subtype_120m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data 
   ) +
   add_censor_mark(color = "#607B8B", shape = 124, size = 2) +  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
-
-png("PFs.png", width = 1000, height = 1000) # Ajustar medidas para claidad de imagen
 pfs_subtype_120m
-dev.off()
 
 ### PFS por subtipos  Zoom de los 3 primeros años (hasta 3 años = 36 meses)
 pfs_subtype_36m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) %>% 
@@ -344,7 +345,6 @@ pfs_subtype_36m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ SUBTYPE, data =
   ) +
   add_censor_mark(color = "#607B8B", shape = 124, size = 2) +  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
-
 pfs_subtype_36m
 
 ### PFS por AJCC stage
@@ -359,10 +359,9 @@ pfs_stage <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 200))  # Ajustar los límites del eje x
-
 pfs_stage
 
-#HR del modelo de cox
+# Cálculo del Hazard Ratio del modelo de cox:
 cox_pfs_stage <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_pfs_stage_tbl <- tbl_regression(cox_pfs_stage, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_pfs_stage_tbl
@@ -379,7 +378,6 @@ pfs_stage_120m <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ AJCC_PATHOLOGIC_
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
-
 pfs_stage_120m
 
 ### PFS por Group stage stage
@@ -395,7 +393,6 @@ pfs_stage_group <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ group_stage, da
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)  +  # Añadir marcas de censura  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 200))  # Ajustar los límites del eje x
-
 pfs_stage_group
 
 #HR del modelo de cox
@@ -415,7 +412,6 @@ pfs_stage_120m_group <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ group_stag
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
-
 pfs_stage_120m_group
 
 ### PFS por Lymph node
@@ -430,7 +426,6 @@ pfs_lympnodes <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ PRIMARY_LYMPH_NOD
     title = "PFS by LYMPH NODES"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)
-
 pfs_lympnodes
 
 #HR del modelo de cox
@@ -450,7 +445,6 @@ pfs_race <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ RACE, data = clinical_
     title = "PFS by RACE"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)
-
 pfs_race
 
 #HR del modelo de cox
@@ -469,7 +463,6 @@ pfs_cancer_type <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Cancer.Type.Det
     title = "PFS by Cancer Type"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)
-
 pfs_cancer_type
 
 #HR del modelo de cox
@@ -477,9 +470,8 @@ cox_pfs_cancer_type <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Cancer.Type.D
 cox_pfs_cancer_type_tbl <- tbl_regression(cox_pfs_cancer_type, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_pfs_cancer_type_tbl
 
-clinical_brca_wide$Oncotree.Code <- as.factor(clinical_brca_wide$Oncotree.Code)
-
 ### PFS por Oncotree
+clinical_brca_wide$Oncotree.Code <- as.factor(clinical_brca_wide$Oncotree.Code)
 pfs_oncotree <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Oncotree.Code, data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
@@ -490,10 +482,9 @@ pfs_oncotree <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Oncotree.Code, dat
     title = "PFS by CANCER TYPE"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)
-
 pfs_oncotree
 
-#HR del modelo de cox
+# Cálculo de Hazard Ratio del modelo de cox
 cox_pfs_oncotree <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Oncotree.Code, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_pfs_oncotree_tbl <- tbl_regression(cox_pfs_oncotree, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_pfs_oncotree_tbl
@@ -510,7 +501,6 @@ pfs_age <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ age_group, data = clini
     title = "PFS by AGE GROUP"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)
-
 pfs_age
 
 #HR del modelo de cox
@@ -518,14 +508,14 @@ cox_pfs_age <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ age_group, data = cli
 cox_pfs_age_tbl <- tbl_regression(cox_pfs_age, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_pfs_age_tbl
 
-
-#### Overall Survival (OS) #####
+###--------------------------------------------------------------------------### 
+### Overall Survival (OS)
+###--------------------------------------------------------------------------###
 
 # Cambiar los niveles de la variable OS_STATUS
 clinical_brca_wide$OS_STATUS <- factor(clinical_brca_wide$OS_STATUS, 
                                         levels = c("0:LIVING", "1:DECEASED"), 
                                         labels = c("0", "1"))
-
 # Verificar los nuevos niveles
 levels(clinical_brca_wide$OS_STATUS)
 
@@ -542,7 +532,6 @@ os <- survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ 1, data = clinical_brca_wide)
     title = "OS"
   ) +
   add_censor_mark(color = "#607B8B", shape = 124, size = 2) 
-
 os
 
 ### OS por subtipos
@@ -556,7 +545,6 @@ os_subtype <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = clinic
     title = "OS by subtype"
   ) +
   add_censor_mark(color = "#607B8B", shape = 124, size = 2)  # Añadir marcas de censura
-
 os_subtype
 
 #HR del modelo de cox
@@ -577,7 +565,6 @@ os_subtype_120m <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = c
   ) +
   add_censor_mark(color = "#607B8B", shape = 124, size = 2) +  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
-
 os_subtype_120m
 
 ### OS por subtipos  Zoom de los 3 primeros años (hasta 3 años = 36 meses)
@@ -593,7 +580,6 @@ os_subtype_36m <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = cl
   ) +
   add_censor_mark(color = "#607B8B", shape = 124, size = 2) +  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
-
 os_subtype_36m
 
 ### OS por AJCC stage
@@ -608,10 +594,9 @@ os_stage <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_ST
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
-
 os_stage
 
-#HR del modelo de cox
+# Cálculo de Hazard Ratio del modelo de cox
 cox_os_stage <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_os_stage_tbl <- tbl_regression(cox_os_stage, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_os_stage_tbl
@@ -628,7 +613,6 @@ os_stage_120m <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUM
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
-
 os_stage_120m
 
 ### OS por Group stage stage
@@ -644,10 +628,9 @@ os_stage_group <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ group_stage, data 
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 36))  # Ajustar los límites del eje x
-
 os_stage_group
 
-#HR del modelo de cox
+# Cálculo de Hazard Ratio del modelo de cox
 cox_os_stage_group <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_os_stage_group_tbl <- tbl_regression(cox_os_stage_group, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_os_stage_group_tbl
@@ -665,10 +648,6 @@ os_stage_120m_group <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ group_stage, 
   add_censor_mark(color = "gray50", shape = 124, size = 2) +  # Añadir marcas de censura  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
 
-png("Overall_survival.png")
-os_stage_120m_group
-dev.off()
-
 ### OS por Lymph node
 os_lympnodes <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_PRESENTATION_ASSESSMENT, data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
@@ -681,10 +660,9 @@ os_lympnodes <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_P
     title = "OS by LYMPH NODES"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)
-
 os_lympnodes
 
-#HR del modelo de cox
+#Cálculo de Hazard Ratio del modelo de cox
 cox_os_lymphnodes <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_PRESENTATION_ASSESSMENT, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_os_lymphnodes_tbl <- tbl_regression(cox_os_lymphnodes, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_os_lymphnodes_tbl
@@ -701,12 +679,9 @@ os_race <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ RACE, data = clinical_brc
     title = "OS by RACE"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)
-
-png("overall_survival_race.png")
 os_race
-dev.off()
 
-#HR del modelo de cox
+# Cálculo de Hazard Ratio del modelo de cox
 cox_os_race <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ RACE, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_os_race_tbl <- tbl_regression(cox_os_race, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_os_race_tbl
@@ -722,10 +697,9 @@ os_cancer_type <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ Cancer.Type.Detail
     title = "OS by Cancer Type"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)
-
 os_cancer_type
 
-#HR del modelo de cox
+# cálculo de Hazard Ratio del modelo de cox
 cox_os_cancer_type <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ Cancer.Type.Detailed, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_os_cancer_type_tbl <- tbl_regression(cox_os_cancer_type, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_os_cancer_type_tbl
@@ -741,10 +715,9 @@ os_oncotree <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ Oncotree.Code, data =
     title = "OS by CANCER TYPE"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)
-
 os_oncotree
 
-#HR del modelo de cox
+# Cálculo de Hazard Ratio del modelo de cox
 cox_os_oncotree <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ Oncotree.Code, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_os_oncotree_tbl <- tbl_regression(cox_os_oncotree, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_os_oncotree_tbl
@@ -761,15 +734,16 @@ os_age <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ age_group, data = clinical
     title = "OS by AGE GROUP"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)
-
 os_age
 
-#HR del modelo de cox
+# Cálculo de Hazard Ratio del modelo de cox
 cox_os_age <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ age_group, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_os_age_tbl <- tbl_regression(cox_os_age, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_os_age_tbl
 
-#### DSS #####
+###--------------------------------------------------------------------------###
+### DSS 
+###--------------------------------------------------------------------------###
 
 # Cambiar los niveles de la variable DSS_STATUS
 clinical_brca_wide$DSS_STATUS <- factor(clinical_brca_wide$DSS_STATUS, 
@@ -792,7 +766,6 @@ dss <- survfit2(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ 1, data = clinical_brca_wi
     title = "DSS"
   ) +
   add_censor_mark(color = "#607B8B", shape = 124, size = 2) 
-
 dss
 
 ### DSS por subtipos
@@ -807,10 +780,9 @@ dss_subtype <-survfit2(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ SUBTYPE, data = cli
     title = "DSS by subtype"
   ) +
   add_censor_mark(color = "#607B8B", shape = 124, size = 2)  # Añadir marcas de censura
-
 dss_subtype
 
-#HR del modelo de cox
+# Cálculo de Hazard Ratio del modelo de cox
 cox_dss_subtype <- coxph(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_dss_subtype_tbl <- tbl_regression(cox_dss_subtype, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_dss_subtype_tbl
@@ -828,10 +800,9 @@ dss_stage_group <-survfit2(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ group_stage, da
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)  +  # Añadir marcas de censura  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 200))  # Ajustar los límites del eje x
-
 dss_stage_group
 
-#HR del modelo de cox
+# Cálculo de Harzard Ratio del modelo de cox
 cox_dss_stage_group <- coxph(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_dss_stage_group_tbl <- tbl_regression(cox_dss_stage_group, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_dss_stage_group_tbl
@@ -848,20 +819,19 @@ dss_age <-survfit2(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ age_group, data = clini
     title = "DSS by AGE GROUP"
   ) +
   add_censor_mark(color = "gray50", shape = 124, size = 2)
-
 dss_age
 
-#HR del modelo de cox
+# Cálculo de Hazard Ratio del modelo de cox
 cox_dss_age <- coxph(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ age_group, data = clinical_brca_wide) # Ajustar el modelo de Cox
 cox_dss_age_tbl <- tbl_regression(cox_dss_age, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
 cox_dss_age_tbl
 
 ###--------------------------------------------------------------------------###
-####### VARIABLES NUMERICAS ###########
+### VARIABLES NUMÉRICAS
 ###--------------------------------------------------------------------------###
 
 ###--------------------------------------------------------------------------###
-### Análisis de correlación entre variables numéricas
+### Análisis de correlación entre variables numéricas y ancestría genética
 ###--------------------------------------------------------------------------###
 
 # Creación de una nueva tabla que contiene solo los datos numéricos:
@@ -884,15 +854,13 @@ names(clinical_selection) <- c(
 )
 
 dim(clinical_selection)
-clinical_selection <- na.omit(clinical_selection)
-dim(clinical_selection)
 
 # Crear valores dummy para variabel ancestría genetica
 df <- dummy_cols(clinical_selection, select_columns = "genetic_ancestry")
 clinical_selection_2 <- df[, -5]
 
 # Visualización general de los datos:
-pairs(clinical_selection_2, pch = 20, col = "blue")
+pairs(clinical_selection_2, pch = 20)
 
 # Sumario estadístico de las variables
 summary(clinical_selection_2)
@@ -904,19 +872,59 @@ dim(clinical_selection_2)
 dim(clinical_selection_3)
 
 # Gráficos de distribuciones sin valores NAs:
-tiff("output/distribuciones.tiff", width = 1000, height = 1000)
 par(mfrow=c(2,4)) #para determinar estructura gráficos
-hist(clinical_selection_2$age, main="Age")
-hist(clinical_selection_2$buffa_hypoxia_score, main="Buffa hypoxia score")
-hist(clinical_selection_2$ragnum_hypoxia_score, main="Ragnum hypoxia score")
-hist(clinical_selection_2$winter_hypoxia_score, main="Winter hypoxia score")
-hist(clinical_selection_3$age, main="Age - sin NAs")
-hist(clinical_selection_3$buffa_hypoxia_score, main="Buffa hypoxia score - sin NAs")
-hist(clinical_selection_3$ragnum_hypoxia_score, main="Ragnum hypoxia score - sin NAs")
-hist(clinical_selection_3$winter_hypoxia_score, main="Winter hypoxia score - sin NAs")
-dev.off()
+hist(
+  clinical_selection_2$age, 
+  xlab = "Age",
+  main="", 
+  col="#5F9EA0"
+  )
+hist(
+  clinical_selection_2$buffa_hypoxia_score, 
+  xlab ="Buffa hypoxia score", 
+  main="", 
+  col="#98F5FF"
+  )
+hist(
+  clinical_selection_2$ragnum_hypoxia_score, 
+  xlab ="Ragnum hypoxia score", 
+  main="", 
+  col="#8EE5EE"
+  )
+hist(
+  clinical_selection_2$winter_hypoxia_score, 
+  xlab ="Winter hypoxia score", 
+  main="", 
+  col="#7AC5CD"
+  )
+hist(
+  clinical_selection_3$age, 
+  xlab ="Age - sin NAs", 
+  main="", 
+  col="#5F9EA0"
+  )
+hist(
+  clinical_selection_3$buffa_hypoxia_score, 
+  xlab ="Buffa hypoxia score - sin NAs", 
+  main="", 
+  col="#98F5FF"
+  )
+hist(
+  clinical_selection_3$ragnum_hypoxia_score, 
+  xlab ="Ragnum hypoxia score - sin NAs", 
+  main="", 
+  col="#8EE5EE"
+  )
+hist(
+  clinical_selection_3$winter_hypoxia_score, 
+  xlab ="Winter hypoxia score - sin NAs", 
+  main="", 
+  col="#7AC5CD"
+  )
+
 
 # Análisis de correlación entre todas las columnas
+
 clinical_corr <- cor(clinical_selection_3)
 clinical_corr
 
@@ -948,15 +956,25 @@ dev.off()
 pca_result <- prcomp(normalized_matrix, center = TRUE, scale. = TRUE)
 summary(pca_result)
 plot(pca_result, type = "l", main="PCA")
-pca_plot <- autoplot(pca_result, cata = normalized_matrix)
+
+pca_plot <- autoplot(pca_result, data = normalized_matrix)
+pca_plot <- autoplot(pca_result, data=normalized_matrix, 
+                     loadings=TRUE, loadings.label = TRUE)
 pca_plot
-biplot(pca_result)
+
+biplot(pca_result, scale = 0, cex = 0.6)
 
 # Revisar el otro método para hacer PCAs y sus plots
 
 # K-means
+scaled_data <- scale(clinical_selection_3)
 kmeans_model <- kmeans(normalized_matrix, centers = 3)
+kmeans_model <- kmeans(scaled_data, centers = 3)
 summary(kmeans_model)
+
+fviz_nbclust(x = km, FUNcluster = kmeans, method = "wss", k.max = 15, 
+             diss = get_dist(d2, method = "euclidean"), nstart = 50)
+
 fviz_cluster(kmeans_model,
             data = normalized_matrix,
              geom = c("point"))
