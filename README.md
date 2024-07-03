@@ -1,14 +1,20 @@
 # cbioportal-project-UB
 Repositorio para el trabajo final del grupo 1 del curso de Ciencia de Datos del Instituto de Formación Continua-IL3 Universidad de Barcelona.
 
-El objetivo de este trabajo fue aplicar técnicas de análisis de datos en datos biomédicos obtenidos desde el portal cBioPortal, un portal que alamcena los datos de distintos estudios de cancer almacenados a través de la colaboración de distintos grupo de investigación a nivel mundial. 
+El objetivo de este trabajo fue aplicar técnicas de análisis de datos en un set de datos biomédicos obtenidos desde el portal cBioPortal, un portal que alamcena los datos de distintos estudios de cancer a través de la colaboración de distintos grupos de investigación a nivel mundial. 
 
-Este repositorio contiene los scripts generados en este trabajo, los cuales incliuyen los siguientes pasos:
-1) Búsqueda de un dataset en cBioportal con las características que nos interesan (multiples variables y número de pacientes superior a 500). El estudio de interés sobre cancer de mama de interés se encuentra en el siguiente link: https://www.cbioportal.org/study/clinicalData?id=brca_tcga_pan_can_atlas_2018
-2) Conectar cBioPortal con la sesión de RStudio mediante una interfaz-API para obtener el dataset escogido.
-3) Exploración de los datos con R:
-   3.1) Generación de tablas con estadísticas descriptivas para la mayoría de variables, con el cálculo de medidas de tendencia central para variables como: edad al diagnóstico, alteraciones genómicas, subtipos y tipos histológicos, entre otras.
-   3.2) Análisis de grupos y subgrupos: comparar variables clínicas y de respuesta en subgrupos por subtipo, estadío o quimioterapia previa mediante tests estadísticos apropiados.
-   3.3) Para ver cambios pronósticos/supervivencia se calcularán y generar curvas de supervivencia y su representación en Kaplan Meiers en toda la población y por subgrupos.
-   3.4) Análisis de correlación entre las diferentes variables cuantitativas del dataset. Investigar si hay una correlación entre la edad al diagnóstico y la cantidad de mutaciones o entre el subtipo de cáncer.
-   
+El primer paso consistió en la búsqueda de un dataset en cBioportal con las características que nos interesan: multiples variables y número de pacientes superior a 500. El estudio de interés sobre cancer de mama de interés se encuentra en el siguiente link: https://www.cbioportal.org/study/clinicalData?id=brca_tcga_pan_can_atlas_2018
+
+Este repositorio contiene los códigos en R generados en este trabajo los cuales son los siquientes:
+1) cabioportal_api_web.R = código que permite conectar una sesión de R con la API web del portal cbioportal permitiendo la descarga de los datos disponible. Además incluye un preprocesamiento de los datos y almacenamiento en formato RData de todas las tablas creadas para su posterior análisis. 
+2) cbioportal_data.RData = archivo que contiene los datos de interés para desarrollar los análisis.
+3) data_analysis.R = código que contiene el análisis descirptivo de los datos, así como tambien análisis de curvas se sobrevivencia y análisis con métodos de aprendizaje automático no supervisado.
+4) app_survival = código de la aplicación de Shyni para la visualización de las curvas de superviviencia.
+
+Con estos códigos se aborda metodológicamente los objetivos específicos del proyecto:
+1) Conectar cBioPortal con una sesión de  R mediante una interfaz-API para obtención de datos.
+2) Realizar estadística descriptiva de los datos clínicos generando tablas y gráficos para una fácil visualización.
+3) Generar curvas de supervivencia Kaplan-Meier en la población general y en subgrupos específicos.
+4) Buscar patrones en los datos mediante técnicas de correlación y aprendizaje automático no supervisado.
+5) Visualizar patrones de alteraciones genéticas prevalentes en la población de estudio mediante un Heatmap.
+6) Desarrollar una interfaz interactiva utilizando Shiny app para la visualización de una parte de los datos. 
