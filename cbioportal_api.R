@@ -2,6 +2,11 @@
 ### Código para conexión de la sesión de R con la web API de cBioPortal
 ###--------------------------------------------------------------------------###
 
+### Set directorio para trabajo local o usar una proyecto de RStudio
+# Cambiar la frase "/dirección/de/trabajo/" con la dirección local para ejecución del código:
+setwd("/dirección/de/trabajo/")
+getwd()
+
 # Instalación y carga de las librerias necesarias para este código:
 if(!require("cbioportalR")){install.packages("cbioportalR")}
 if(!require("tidyverse")){install.packages("tidyverse")}
@@ -133,5 +138,12 @@ clinical_brca_wide$age_group <- factor(clinical_brca_wide$age_group,
                                        levels = c("<40 years old", "40-60 years old", ">60 years old"))
 
 # Guardar los datos de interés para cargar rápidamente en una futura sesión de R:
-save(genetics, clinical_brca, attr_brca, data_oncotree, data_tmb, data_fraction_gen_al, data_cancer_type, clinical_brca_wide, 
-     file = "data2.RData")
+save(genetics, 
+     clinical_brca, 
+     attr_brca, 
+     data_oncotree, 
+     data_tmb, 
+     data_fraction_gen_al, 
+     data_cancer_type, 
+     clinical_brca_wide, 
+     file = "cbioportal_data.RData")
