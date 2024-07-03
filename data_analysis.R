@@ -2,6 +2,11 @@
 # Código para el análisis de datos descargados desde cbioportal
 ###--------------------------------------------------------------------------###
 
+### Set directorio para trabajo local o usar una proyecto de RStudio
+# Cambiar la frase "/dirección/de/trabajo/" con la dirección local para ejecución del código:
+setwd("/dirección/de/trabajo/")
+getwd()
+
 ### Intalación de librerias necesarias para el análisis:
 if(!require("tidyverse")){install.packages("tidyverse")}
 if(!require("gtsummary")){install.packages("gtsummary")}
@@ -19,7 +24,7 @@ if(!require("patchwork")){install.packages("patchwork")}
 if(!require("RColorBrewer")){install.packages("RColorBrewer")}
 if(!require("fastDummies")){install.packages("fastDummies")}
 
-# Instalación de Bioconductor
+### Instalación de Bioconductor para la instalación del paquete ComplexHeatmap
 # Opción 1:
 #if (!require("BiocManager", quietly = TRUE))
 #  install.packages("BiocManager")
@@ -276,7 +281,6 @@ pfs <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_brca_wi
     title = "PFS"
   ) +
   add_censor_mark(color = "#607B8B", shape = 124, size = 2) 
-
 pfs
 
 # Zoom de los 10 primeros años (hasta 120 meses)
@@ -293,7 +297,6 @@ pfs_120m <- survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ 1, data = clinical_br
   ) +
   add_censor_mark(color = "#607B8B", shape = 124, size = 2) +  # Añadir marcas de censura
   coord_cartesian(xlim = c(0, 120))  # Ajustar los límites del eje x
-  
 pfs_120m
 
 ### PFS por subtipos
@@ -428,9 +431,12 @@ pfs_lympnodes <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ PRIMARY_LYMPH_NOD
   add_censor_mark(color = "gray50", shape = 124, size = 2)
 pfs_lympnodes
 
-#HR del modelo de cox
-cox_pfs_lymphnodes <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_PRESENTATION_ASSESSMENT, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_pfs_lymphnodes_tbl <- tbl_regression(cox_pfs_lymphnodes, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+#HR del modelo de cox. 
+#Ajustar el modelo:
+cox_pfs_lymphnodes <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_PRESENTATION_ASSESSMENT, 
+                            data = clinical_brca_wide)
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_pfs_lymphnodes_tbl <- tbl_regression(cox_pfs_lymphnodes, exponentiate = TRUE) 
 cox_pfs_lymphnodes_tbl
 
 ### PFS por Race
@@ -448,8 +454,11 @@ pfs_race <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ RACE, data = clinical_
 pfs_race
 
 #HR del modelo de cox
-cox_pfs_race <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ RACE, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_pfs_race_tbl <- tbl_regression(cox_pfs_race, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox
+cox_pfs_race <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ RACE, 
+                      data = clinical_brca_wide) 
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_pfs_race_tbl <- tbl_regression(cox_pfs_race, exponentiate = TRUE) 
 cox_pfs_race_tbl
 
 ### PFS por Cancer Type
@@ -466,8 +475,10 @@ pfs_cancer_type <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Cancer.Type.Det
 pfs_cancer_type
 
 #HR del modelo de cox
-cox_pfs_cancer_type <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Cancer.Type.Detailed, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_pfs_cancer_type_tbl <- tbl_regression(cox_pfs_cancer_type, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox
+cox_pfs_cancer_type <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Cancer.Type.Detailed, data = clinical_brca_wide) 
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_pfs_cancer_type_tbl <- tbl_regression(cox_pfs_cancer_type, exponentiate = TRUE) 
 cox_pfs_cancer_type_tbl
 
 ### PFS por Oncotree
@@ -485,8 +496,10 @@ pfs_oncotree <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Oncotree.Code, dat
 pfs_oncotree
 
 # Cálculo de Hazard Ratio del modelo de cox
-cox_pfs_oncotree <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Oncotree.Code, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_pfs_oncotree_tbl <- tbl_regression(cox_pfs_oncotree, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox
+cox_pfs_oncotree <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ Oncotree.Code, data = clinical_brca_wide) 
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_pfs_oncotree_tbl <- tbl_regression(cox_pfs_oncotree, exponentiate = TRUE) 
 cox_pfs_oncotree_tbl
 
 ### PFS por Age group
@@ -504,8 +517,10 @@ pfs_age <-survfit2(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ age_group, data = clini
 pfs_age
 
 #HR del modelo de cox
-cox_pfs_age <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ age_group, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_pfs_age_tbl <- tbl_regression(cox_pfs_age, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox
+cox_pfs_age <- coxph(Surv(PFS_MONTHS, PFS_STATUS == "1") ~ age_group, data = clinical_brca_wide) 
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_pfs_age_tbl <- tbl_regression(cox_pfs_age, exponentiate = TRUE) 
 cox_pfs_age_tbl
 
 ###--------------------------------------------------------------------------### 
@@ -548,8 +563,10 @@ os_subtype <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = clinic
 os_subtype
 
 #HR del modelo de cox
-cox_os_subtype <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_os_subtype_tbl <- tbl_regression(cox_os_subtype, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox
+cox_os_subtype <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) 
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_os_subtype_tbl <- tbl_regression(cox_os_subtype, exponentiate = TRUE) 
 cox_os_subtype_tbl
 
 ### OS por subtipos  Zoom de los 10 primeros años (hasta 120 meses)
@@ -583,7 +600,8 @@ os_subtype_36m <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ SUBTYPE, data = cl
 os_subtype_36m
 
 ### OS por AJCC stage
-os_stage <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) %>% 
+os_stage <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, 
+                    data = clinical_brca_wide) %>% 
   ggsurvfit(linewidth = 1)  + 
   add_quantile(y_value = 0.5, color = "gray50", linewidth = 0.75) +
   scale_ggsurvfit() +
@@ -597,8 +615,10 @@ os_stage <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_ST
 os_stage
 
 # Cálculo de Hazard Ratio del modelo de cox
-cox_os_stage <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_os_stage_tbl <- tbl_regression(cox_os_stage, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox
+cox_os_stage <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ AJCC_PATHOLOGIC_TUMOR_STAGE, data = clinical_brca_wide)
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_os_stage_tbl <- tbl_regression(cox_os_stage, exponentiate = TRUE)
 cox_os_stage_tbl
 
 ### OS por AJCC stage en 120m
@@ -631,8 +651,10 @@ os_stage_group <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ group_stage, data 
 os_stage_group
 
 # Cálculo de Hazard Ratio del modelo de cox
-cox_os_stage_group <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_os_stage_group_tbl <- tbl_regression(cox_os_stage_group, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox
+cox_os_stage_group <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ group_stage, data = clinical_brca_wide)
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_os_stage_group_tbl <- tbl_regression(cox_os_stage_group, exponentiate = TRUE) 
 cox_os_stage_group_tbl
 
 ### OS por Group stage stage en 120m
@@ -663,8 +685,10 @@ os_lympnodes <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_P
 os_lympnodes
 
 #Cálculo de Hazard Ratio del modelo de cox
-cox_os_lymphnodes <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_PRESENTATION_ASSESSMENT, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_os_lymphnodes_tbl <- tbl_regression(cox_os_lymphnodes, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox
+cox_os_lymphnodes <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ PRIMARY_LYMPH_NODE_PRESENTATION_ASSESSMENT, data = clinical_brca_wide) 
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_os_lymphnodes_tbl <- tbl_regression(cox_os_lymphnodes, exponentiate = TRUE) 
 cox_os_lymphnodes_tbl
 
 ### OS por Race
@@ -682,8 +706,10 @@ os_race <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ RACE, data = clinical_brc
 os_race
 
 # Cálculo de Hazard Ratio del modelo de cox
-cox_os_race <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ RACE, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_os_race_tbl <- tbl_regression(cox_os_race, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox
+cox_os_race <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ RACE, data = clinical_brca_wide) 
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_os_race_tbl <- tbl_regression(cox_os_race, exponentiate = TRUE) 
 cox_os_race_tbl
 
 ### OS por Cancer Type
@@ -700,8 +726,10 @@ os_cancer_type <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ Cancer.Type.Detail
 os_cancer_type
 
 # cálculo de Hazard Ratio del modelo de cox
-cox_os_cancer_type <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ Cancer.Type.Detailed, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_os_cancer_type_tbl <- tbl_regression(cox_os_cancer_type, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox
+cox_os_cancer_type <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ Cancer.Type.Detailed, data = clinical_brca_wide)
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_os_cancer_type_tbl <- tbl_regression(cox_os_cancer_type, exponentiate = TRUE) 
 cox_os_cancer_type_tbl
 
 ### OS por Oncotree
@@ -718,8 +746,10 @@ os_oncotree <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ Oncotree.Code, data =
 os_oncotree
 
 # Cálculo de Hazard Ratio del modelo de cox
-cox_os_oncotree <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ Oncotree.Code, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_os_oncotree_tbl <- tbl_regression(cox_os_oncotree, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox
+cox_os_oncotree <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ Oncotree.Code, data = clinical_brca_wide) 
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_os_oncotree_tbl <- tbl_regression(cox_os_oncotree, exponentiate = TRUE) 
 cox_os_oncotree_tbl
 
 ### OS por Age group
@@ -737,8 +767,10 @@ os_age <-survfit2(Surv(OS_MONTHS, OS_STATUS == "1") ~ age_group, data = clinical
 os_age
 
 # Cálculo de Hazard Ratio del modelo de cox
-cox_os_age <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ age_group, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_os_age_tbl <- tbl_regression(cox_os_age, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox
+cox_os_age <- coxph(Surv(OS_MONTHS, OS_STATUS == "1") ~ age_group, data = clinical_brca_wide) 
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression
+cox_os_age_tbl <- tbl_regression(cox_os_age, exponentiate = TRUE) 
 cox_os_age_tbl
 
 ###--------------------------------------------------------------------------###
@@ -783,8 +815,10 @@ dss_subtype <-survfit2(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ SUBTYPE, data = cli
 dss_subtype
 
 # Cálculo de Hazard Ratio del modelo de cox
-cox_dss_subtype <- coxph(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_dss_subtype_tbl <- tbl_regression(cox_dss_subtype, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox:
+cox_dss_subtype <- coxph(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ SUBTYPE, data = clinical_brca_wide)
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression:
+cox_dss_subtype_tbl <- tbl_regression(cox_dss_subtype, exponentiate = TRUE) 
 cox_dss_subtype_tbl
 
 ### DSS por Group stage stage
@@ -803,8 +837,10 @@ dss_stage_group <-survfit2(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ group_stage, da
 dss_stage_group
 
 # Cálculo de Harzard Ratio del modelo de cox
-cox_dss_stage_group <- coxph(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_dss_stage_group_tbl <- tbl_regression(cox_dss_stage_group, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox:
+cox_dss_stage_group <- coxph(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ group_stage, data = clinical_brca_wide) 
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression:
+cox_dss_stage_group_tbl <- tbl_regression(cox_dss_stage_group, exponentiate = TRUE) 
 cox_dss_stage_group_tbl
 
 ### DSS por Age group
@@ -822,8 +858,10 @@ dss_age <-survfit2(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ age_group, data = clini
 dss_age
 
 # Cálculo de Hazard Ratio del modelo de cox
-cox_dss_age <- coxph(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ age_group, data = clinical_brca_wide) # Ajustar el modelo de Cox
-cox_dss_age_tbl <- tbl_regression(cox_dss_age, exponentiate = TRUE) # Crear una tabla de resumen del modelo de Cox usando tbl_regression
+# Ajustar el modelo de Cox:
+cox_dss_age <- coxph(Surv(DSS_MONTHS, DSS_STATUS == "1") ~ age_group, data = clinical_brca_wide) 
+# Crear una tabla de resumen del modelo de Cox usando tbl_regression:
+cox_dss_age_tbl <- tbl_regression(cox_dss_age, exponentiate = TRUE) 
 cox_dss_age_tbl
 
 ###--------------------------------------------------------------------------###
@@ -1223,8 +1261,6 @@ rownames(mutation_matrix) <- mutations_wide_modified$hugoGeneSymbol
 # Definir una paleta de colores personalizada
 variant_colors <- c("WT" = "#FFF5EE", "SNP" = "#A2CD5A", "INS" = "#EE6363", "DEL" = "#6CA6CD")
 
-
-
 # Crear el heatmap
 Heatmap(mutation_matrix,
         name = "Mutations",
@@ -1239,8 +1275,6 @@ Heatmap(mutation_matrix,
         show_column_dend = FALSE,  
         show_row_dend = FALSE,
 )
-
-
 
 ###### Heatmap con la función específica de ONCOPRINT de cBioportal para resaltar también los porcentajes y ver el total de mutaciones y los tipos #########
 
@@ -1279,8 +1313,6 @@ oncoPrint(mutation_matrix,
           remove_empty_columns = TRUE, remove_empty_rows = TRUE
 )
 
-
-
 #HEATMAP POR MUTATION TYPE
 
 #Prueba Heatmap tipo 1
@@ -1316,7 +1348,17 @@ print(mutations_wide_2)
 # Crear una versión modificada de la tabla para el heatmap
 mutations_wide_2_modified <- mutations_wide_2 %>%
   pivot_longer(-hugoGeneSymbol, names_to = "patientId", values_to = "mutationType") %>%
-  mutate(mutationType = factor(mutationType, levels = c("Frame_Shift_Del","Frame_Shift_Ins","In_Frame_Del","In_Frame_Ins","Missense_Mutation","Nonsense_Mutation","Nonstop_Mutation","Splice_Region","Splice_Site","Translation_Start_Site"
+  mutate(mutationType = factor(mutationType, levels = c(
+    "Frame_Shift_Del",
+    "Frame_Shift_Ins",
+    "In_Frame_Del",
+    "In_Frame_Ins",
+    "Missense_Mutation",
+    "Nonsense_Mutation",
+    "Nonstop_Mutation",
+    "Splice_Region",
+    "Splice_Site",
+    "Translation_Start_Site"
   ))) %>%
   pivot_wider(names_from = patientId, values_from = mutationType)
 
@@ -1328,9 +1370,17 @@ mutation_matrix_2 <- mutation_matrix_2[, order(colnames(mutation_matrix_2))]
 rownames(mutation_matrix_2) <- mutations_wide_2_modified$hugoGeneSymbol
 
 # Definir una paleta de colores personalizada
-variant_colors_2 <- c("Frame_Shift_Del" = "#FFA07A", "Frame_Shift_Ins" = "#79a2ab", "In_Frame_Del" = "#E49183", "In_Frame_Ins" = "#E8A49A", "Missense_Mutation" = "#b3577f", "Nonsense_Mutation" = "#CDB79E", "Splice_Region" = "#D35C79", "Splice_Site" = "#CE9F51", "Translation_Start_Site" = "#46307E" )
-
-
+variant_colors_2 <- c(
+  "Frame_Shift_Del" = "#FFA07A", 
+  "Frame_Shift_Ins" = "#79a2ab", 
+  "In_Frame_Del" = "#E49183", 
+  "In_Frame_Ins" = "#E8A49A", 
+  "Missense_Mutation" = "#b3577f", 
+  "Nonsense_Mutation" = "#CDB79E", 
+  "Splice_Region" = "#D35C79", 
+  "Splice_Site" = "#CE9F51", 
+  "Translation_Start_Site" = "#46307E"
+)
 
 # Crear el heatmap
 Heatmap(mutation_matrix_2,
@@ -1350,7 +1400,17 @@ Heatmap(mutation_matrix_2,
 ###### Heatmap con la función específica de ONCOPRINT de cBioportal para resaltar también los porcentajes y ver el total de mutaciones y los tipos #########
 
 # Definir la paleta de colores personalizada, excluyendo WT
-col_2 <- c("Frame_Shift_Del" = "#FFA07A", "Frame_Shift_Ins" = "#79a2ab", "In_Frame_Del" = "#E49183", "In_Frame_Ins" = "#E8A49A", "Missense_Mutation" = "#b3577f", "Nonsense_Mutation" = "#CDB79E", "Splice_Region" = "#D35C79", "Splice_Site" = "#CE9F51", "Translation_Start_Site" = "#46307E" )
+col_2 <- c(
+  "Frame_Shift_Del" = "#FFA07A", 
+  "Frame_Shift_Ins" = "#79a2ab", 
+  "In_Frame_Del" = "#E49183", 
+  "In_Frame_Ins" = "#E8A49A", 
+  "Missense_Mutation" = "#b3577f", 
+  "Nonsense_Mutation" = "#CDB79E", 
+  "Splice_Region" = "#D35C79", 
+  "Splice_Site" = "#CE9F51", 
+  "Translation_Start_Site" = "#46307E" 
+)
 
 # Convertir valores WT a NA para que no los contabilice como mutaciones y se puedan calcular los % correctamente
 mutation_matrix_2[mutation_matrix_2 == "WT"] <- NA
@@ -1376,7 +1436,17 @@ alter_fun_2 <- list(
 heatmap_legend_param <- list(
   title = "Mutations",
   at = names(col_2),
-  labels = c("Frame_Shift_Del", "Frame_Shift_Ins", "In_Frame_Del", "In_Frame_Ins", "Missense_Mutation", "Nonsense_Mutation", "Splice_Region", "Splice_Site", "Translation_Start_Site")
+  labels = c(
+    "Frame_Shift_Del", 
+    "Frame_Shift_Ins", 
+    "In_Frame_Del", 
+    "In_Frame_Ins", 
+    "Missense_Mutation", 
+    "Nonsense_Mutation", 
+    "Splice_Region", 
+    "Splice_Site", 
+    "Translation_Start_Site"
+  )
 )
 
 # Crear el oncoPrint con genes en el eje Y y pacientes en el eje X
